@@ -105,7 +105,7 @@ export default function CampsPage() {
                           Operational Purpose
                         </h4>
                         <p className="text-xs text-neutral-300 font-medium leading-relaxed italic">
-                          "{camp.purpose}"
+                          &quot;{camp.purpose}&quot;
                         </p>
                       </div>
 

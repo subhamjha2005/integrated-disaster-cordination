@@ -1,7 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { Package, Truck, CheckCircle2, Factory, ArrowRight } from 'lucide-react';
+import { Package, Truck, CheckCircle2, Factory } from 'lucide-react';
 import { useAppStore } from '@/store/useAppStore';
 import { getTranslation } from '@/lib/translations';
 

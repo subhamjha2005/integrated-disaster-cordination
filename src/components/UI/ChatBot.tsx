@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
     MessageCircle, X, Send, Bot, User, Zap,
@@ -42,6 +42,22 @@ export function ChatBot() {
         scrollToBottom();
     }, [messages, transcript]);
 
+    const stopListening = useCallback(() => {
+        if (recognitionRef.current && isListening) {
+            recognitionRef.current.stop();
+            setIsListening(false);
+            setTranscript('');
+        }
+    }, [isListening]);
+
+    const startListening = useCallback(() => {
+        if (recognitionRef.current && !isListening) {
+            setTranscript('');
+            recognitionRef.current.start();
+            setIsListening(true);
+        }
+    }, [isListening]);
+
     // Voice Recognition Setup (STT)
     useEffect(() => {
         if (typeof window !== 'undefined' && ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window)) {
@@ -80,23 +96,7 @@ export function ChatBot() {
         return () => {
             if (recognitionRef.current) recognitionRef.current.stop();
         };
-    }, [language]);
-
-    const startListening = () => {
-        if (recognitionRef.current && !isListening) {
-            setTranscript('');
-            recognitionRef.current.start();
-            setIsListening(true);
-        }
-    };
-
-    const stopListening = () => {
-        if (recognitionRef.current && isListening) {
-            recognitionRef.current.stop();
-            setIsListening(false);
-            setTranscript('');
-        }
-    };
+    }, [language, stopListening]);
 
     const stopSpeaking = () => {
         if (typeof window !== 'undefined') {

@@ -114,7 +114,7 @@ export async function fetchGDACSEvents(): Promise<LiveDisasterEvent[]> {
       timestamp: feat.properties?.fromdate || new Date().toISOString(),
       source: 'GDACS' as const
     })).filter((item: any) => item.lat !== 0 && item.lng !== 0);
-  } catch (err) {
+  } catch {
     // Fail silently so USGS and NASA EONET continue unaffected
     return [];
   }

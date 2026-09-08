@@ -224,7 +224,7 @@ export default function ChatPage() {
       const channelMsgs = prev[msg.channelId] || [];
       if (channelMsgs.some((m) => m.id === msg.id)) return prev;
 
-      let updatedMsgs = [...channelMsgs];
+      const updatedMsgs = [...channelMsgs];
       if (!msg.id.startsWith('offline-')) {
         const offlineIndex = updatedMsgs.findIndex(
           (m) =>

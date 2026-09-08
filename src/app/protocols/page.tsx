@@ -410,7 +410,7 @@ export default function ProtocolsPage() {
                               {(activeProto.advancedGuide as any).sequence.map((seq: any, idx: number) => (
                                 <div key={idx} className="p-6 bg-white/[0.01] border border-white/5 rounded-2xl hover:bg-white/[0.03] transition-colors">
                                   <div className="text-[10px] font-black text-white/50 uppercase tracking-[0.2em] mb-3">{seq.env}</div>
-                                  <p className="text-[12px] font-bold text-neutral-200 leading-relaxed italic">"{seq.action}"</p>
+                                  <p className="text-[12px] font-bold text-neutral-200 leading-relaxed italic">&quot;{seq.action}&quot;</p>
                                 </div>
                               ))}
                             </div>
