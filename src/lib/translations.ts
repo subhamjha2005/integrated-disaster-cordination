@@ -81,8 +81,8 @@ const en = {
     mesh_sync: 'Mesh Sync',
 
     // Features
-    feat_bot_title: 'Voice AI Assistant',
-    feat_bot_desc: 'Speak directly to PyroBot (Llama 70B) for real-time emergency guidance and protocols.',
+    feat_bot_title: 'Emergency Mesh Chat',
+    feat_bot_desc: 'Decentralized peer-to-peer communication net with dedicated Police, Health, and NDRF dispatch lines.',
     feat_hub_title: 'Resilience Hub',
     feat_hub_desc: 'Find and navigate to the nearest active relief centers at AEC Guwahati.',
     feat_ledger_title: 'Transparency Ledger',
@@ -251,8 +251,8 @@ const hi: Record<TranslationKey, string> = {
     mesh_sync: 'मेश सिंक',
 
     // Features
-    feat_bot_title: 'वॉयस एआई सहायक',
-    feat_bot_desc: 'वास्तविक समय के आपातकालीन मार्गदर्शन और नियमों के लिए सीधे पाइरोबॉट (लामा 70B) से बात करें।',
+    feat_bot_title: 'आपातकालीन मेश चैट',
+    feat_bot_desc: 'पुलिस, स्वास्थ्य और एनडीआरएफ डिस्पैच लाइनों के साथ विकेंद्रीकृत संचार नेटवर्क।',
     feat_hub_title: 'लचीलापन केंद्र',
     feat_hub_desc: 'AEC गुवाहाटी में निकटतम सक्रिय राहत केंद्रों को खोजें और वहां पहुंचें।',
     feat_ledger_title: 'पारदर्शिता खाता',
@@ -421,8 +421,8 @@ const as: Record<TranslationKey, string> = {
     mesh_sync: 'চিংক',
 
     // Features
-    feat_bot_title: 'ভইচ এআই সহায়ক',
-    feat_bot_desc: 'বাস্তৱ সময়ৰ জৰুৰীকালীন নিৰ্দেশনা আৰু নিয়মাৱলীৰ বাবে পোনপটীয়াকৈ পাইৰোবট (Llama 70B) ৰ সৈতে কথা পাতক।',
+    feat_bot_title: 'জৰুৰীকালীন মেশ্ব চেট',
+    feat_bot_desc: 'আৰক্ষী, স্বাস্থ্য আৰু এনডিআৰএফ দলৰ সৈতে বিকেন্দ্ৰীকৃত যোগাযোগ ব্যৱস্থা।',
     feat_hub_title: 'স্থিতিস্থাপকতা কেন্দ্ৰ',
     feat_hub_desc: 'গুৱাহাটীৰ AEC-ৰ নিকটতম সক্ৰিয় সাহায্য কেন্দ্ৰসমূহ বিচাৰি উলিয়াওক আৰু তালৈ যাওক।',
     feat_ledger_title: 'স্বচ্ছতা লেজাৰ',

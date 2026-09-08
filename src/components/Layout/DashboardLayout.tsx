@@ -23,7 +23,6 @@ import {
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useAppStore } from '@/store/useAppStore';
-import { ChatBot } from '@/components/UI/ChatBot';
 import { LanguageSelector } from '@/components/UI/LanguageSelector';
 import { getTranslation } from '@/lib/translations';
 
@@ -258,9 +257,6 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
         <main className="flex-1 overflow-y-auto p-8 scroll-smooth">
           {children}
         </main>
-
-        {/* ChatBot Overlay */}
-        <ChatBot />
       </div>
     </div>
   );

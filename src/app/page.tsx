@@ -15,7 +15,7 @@ import {
   Zap,
   ChevronRight,
   Maximize2,
-  Bot,
+  Radio,
   Package
 } from 'lucide-react';
 import Link from 'next/link';
@@ -203,12 +203,8 @@ export default function CinematicHome() {
           <FeatureCard
             title={t('feat_bot_title')}
             desc={t('feat_bot_desc')}
-            icon={Bot}
-            href="#"
-            onClick={() => {
-              const btn = document.querySelector('button[aria-label="Open Chat"]') as HTMLButtonElement;
-              if (btn) btn.click();
-            }}
+            icon={Radio}
+            href="/chat"
             highlight
           />
           <FeatureCard
