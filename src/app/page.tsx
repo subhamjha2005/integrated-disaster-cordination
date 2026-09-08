@@ -30,7 +30,7 @@ import { getTranslation } from '@/lib/translations';
 export default function CinematicHome() {
   const { camps, alerts, language } = useAppStore();
   const [viewMode, setViewMode] = useState<'globe' | 'map'>('globe');
-
+  const [selectedCoords, setSelectedCoords] = useState<[number, number]>([26.1388, 91.6625]);
   const [isFullscreen, setIsFullscreen] = useState(false);
 
   const t = (key: any) => getTranslation(language, key);
@@ -74,7 +74,12 @@ export default function CinematicHome() {
                   transition={{ duration: 1.5, ease: [0.4, 0, 0.2, 1] }}
                   className="w-full h-full"
                 >
-                  <StrategicGlobe onEngage={() => setViewMode('map')} />
+                  <StrategicGlobe onEngage={(coords) => {
+                    if (coords && typeof coords.lat === 'number' && typeof coords.lng === 'number') {
+                      setSelectedCoords([coords.lat, coords.lng]);
+                    }
+                    setViewMode('map');
+                  }} />
 
                   {/* Globe HUD Overlay */}
                   <div className="absolute top-8 right-8 space-y-4 pointer-events-none text-right">
@@ -93,7 +98,7 @@ export default function CinematicHome() {
                   transition={{ duration: 1.5, ease: [0.4, 0, 0.2, 1] }}
                   className="w-full h-full relative"
                 >
-                  <ReliefMap />
+                  <ReliefMap centerCoords={selectedCoords} />
                   <div className="absolute inset-0 pointer-events-none shadow-[inset_0_0_100px_rgba(99,102,241,0.2)]"></div>
                   <button
                     onClick={() => setViewMode('globe')}

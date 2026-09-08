@@ -13,7 +13,7 @@ const GlobeClient = dynamic(() => import('./GlobeClient'), {
   )
 });
 
-export function StrategicGlobe({ onEngage }: { onEngage?: () => void }) {
+export function StrategicGlobe({ onEngage }: { onEngage?: (coords?: { lat: number; lng: number }) => void }) {
   return (
     <div className="w-full h-full relative">
       {/* Globe with overflow-hidden for proper rendering */}
@@ -40,7 +40,7 @@ export function StrategicGlobe({ onEngage }: { onEngage?: () => void }) {
           <span className="text-[8px] font-bold text-white/40 uppercase tracking-widest">Double Click Globe to Engage Deep Scan</span>
           {onEngage && (
             <button
-              onClick={onEngage}
+              onClick={() => onEngage()}
               className="pointer-events-auto mt-1 px-6 py-2 bg-indigo-600/80 hover:bg-indigo-600 border border-indigo-400/30 text-white font-black text-[10px] uppercase tracking-[0.2em] rounded-full flex items-center gap-2 transition-all hover:shadow-[0_0_20px_rgba(99,102,241,0.5)]"
             >
               <svg xmlns="http://www.w3.org/2000/svg" className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 3 21 3 21 9" /><polyline points="9 21 3 21 3 15" /><line x1="21" y1="3" x2="14" y2="10" /><line x1="3" y1="21" x2="10" y2="14" /></svg>

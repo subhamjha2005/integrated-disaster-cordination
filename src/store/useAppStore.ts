@@ -38,6 +38,11 @@ interface AppState {
   priorityMessages: PriorityMessage[];
   isDroneDeployed: boolean;
   dronePosition: { lat: number; lng: number } | null;
+  rfMode: 'lora' | 'cofdm';
+  dronePowerMode: 'battery' | 'tethered';
+  originHubId: string;
+  destHubId: string;
+  setMeshRoute: (origin: string, dest: string) => void;
 
   // Actions
   setHydratedState: (state: Partial<AppState>) => void;
@@ -63,6 +68,8 @@ interface AppState {
   deployDrone: () => void;
   recallDrone: () => void;
   updateDronePosition: (lat: number, lng: number) => void;
+  setRfMode: (mode: 'lora' | 'cofdm') => void;
+  setDronePowerMode: (mode: 'battery' | 'tethered') => void;
   hopQueuedMessages: () => void;
   deliverQueuedMessages: () => void;
 
@@ -102,6 +109,10 @@ export const useAppStore = create<AppState>((set, get) => ({
   networkMode: 'normal',
   isDroneDeployed: false,
   dronePosition: null,
+  rfMode: 'lora',
+  dronePowerMode: 'battery',
+  originHubId: 'HQ',
+  destHubId: 'CAMP',
   priorityMessages: [],
   networkNodes: [
     { id: 'node-gateway', name: 'HQ Gateway', type: 'gateway', status: 'online', location: { lat: 26.1158, lng: 91.7582 } },
@@ -362,6 +373,9 @@ export const useAppStore = create<AppState>((set, get) => ({
   }),
 
   updateDronePosition: (lat, lng) => set({ dronePosition: { lat, lng } }),
+  setRfMode: (mode) => set({ rfMode: mode }),
+  setDronePowerMode: (mode) => set({ dronePowerMode: mode }),
+  setMeshRoute: (origin, dest) => set({ originHubId: origin, destHubId: dest }),
 
   hopQueuedMessages: () => set((state) => {
     const updatedMessages = state.priorityMessages.map(msg => 

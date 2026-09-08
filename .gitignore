@@ -20,3 +20,7 @@ parse_headers2.js
 parse_csv_to_json.js
 parse_flood_data.js
 parse_emdat.py
+skills/
+MODIS_GlobalFloodDatabase-main/
+axom-flood-main/
+tsconfig.tsbuildinfo

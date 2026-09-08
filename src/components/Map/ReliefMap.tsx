@@ -14,10 +14,10 @@ const MapClient = dynamic(() => import('./MapClient'), {
   )
 });
 
-export function ReliefMap() {
+export function ReliefMap({ centerCoords }: { centerCoords?: [number, number] }) {
   return (
     <div className="glass-panel w-full h-full relative overflow-hidden">
-      <MapClient />
+      <MapClient centerCoords={centerCoords} />
     </div>
   );
 }

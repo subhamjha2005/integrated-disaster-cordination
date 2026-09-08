@@ -86,6 +86,8 @@ export interface IncidentReport {
   intensity: number; // 0.1 to 1.0 for heatmap weighting
 }
 
+export type CommMedium = 'internet' | 'wifi' | 'bluetooth';
+
 export interface ChatMessage {
   id: string;
   pubkey: string;
@@ -93,15 +95,20 @@ export interface ChatMessage {
   timestamp: number;
   channelId: string;
   alias: string;
+  medium?: CommMedium;
+  dispatchCode?: string;
+  targetAgency?: string;
+  urgency?: number;
 }
 
 export interface ChatChannel {
   id: string;
   name: string;
-  type: 'location' | 'camp' | 'emergency';
+  type: 'location' | 'camp' | 'emergency' | 'agency';
   geohash?: string;
   campId?: string;
   description?: string;
+  code?: string;
 }
 
 export type AgencyRole = 'Police' | 'Health' | 'NDRF' | 'LocalAdmin' | 'Public';

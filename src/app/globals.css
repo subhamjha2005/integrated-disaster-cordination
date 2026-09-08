@@ -45,11 +45,28 @@ html.light-theme {
 
 
 @layer base {
+  html {
+    zoom: 0.7;
+    height: 142.86vh;
+    min-height: 142.86vh;
+    background: var(--background);
+  }
+
   body {
+    height: 142.86vh;
+    min-height: 142.86vh;
     background: var(--background);
     color: var(--foreground);
     @apply antialiased overflow-x-hidden;
     font-family: var(--font-sans);
+  }
+
+  .h-screen {
+    height: 142.86vh !important;
+  }
+
+  .min-h-screen {
+    min-height: 142.86vh !important;
   }
 
   h1,

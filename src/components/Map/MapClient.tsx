@@ -6,10 +6,23 @@ import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import 'leaflet.heat';
 import { useAppStore } from '@/store/useAppStore';
-import { Crosshair, MapPin, Loader2, Layers } from 'lucide-react';
+import { Crosshair, MapPin, Loader2, Layers, Zap, Navigation, ArrowRight, Radio, Battery, Cable, Wifi, RotateCcw, GripHorizontal, ChevronDown, ChevronUp, Activity, Sparkles } from 'lucide-react';
 import { DroneRelay, EMERGENCY_HUBS } from './DroneRelay';
+import { fetchNearbyEmergencyFacilities, EmergencyFacility } from '@/lib/disasterApi';
+import { motion } from 'framer-motion';
 
-// Fix for default marker icons in React-Leaflet
+// Custom Emergency Icons for OpenStreetMap Facilities
+const createFacilityIcon = (color: string, label: string) => L.divIcon({
+  className: 'custom-facility-marker',
+  html: `<div style="background-color: ${color}; border: 2px solid white; color: white; font-weight: 900; font-size: 10px; width: 26px; height: 26px; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 10px ${color};">${label}</div>`,
+  iconSize: [26, 26],
+  iconAnchor: [13, 13]
+});
+
+const HospitalIcon = createFacilityIcon('#ef4444', 'H');
+const ShelterIcon = createFacilityIcon('#10b981', 'S');
+const FireIcon = createFacilityIcon('#f59e0b', 'F');
+const PoliceIcon = createFacilityIcon('#6366f1', 'P');
 const DefaultIcon = L.icon({
   iconUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon.png',
   shadowUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-shadow.png',
@@ -104,10 +117,72 @@ function UserLocationController({ userLocation }: {
   return null;
 }
 
-export default function MapClient() {
+// Target Location Controller
+function TargetCenterController({ centerCoords }: { centerCoords?: [number, number] }) {
+  const map = useMap();
+
+  useEffect(() => {
+    if (centerCoords && centerCoords[0] && centerCoords[1]) {
+      map.flyTo(centerCoords, 13, { duration: 1.8 });
+    }
+  }, [centerCoords, map]);
+
+  return null;
+}
+
+export default function MapClient({ centerCoords }: { centerCoords?: [number, number] }) {
   const camps = useAppStore(state => state.camps);
+  const {
+    isDroneDeployed,
+    deployDrone,
+    recallDrone,
+    rfMode,
+    setRfMode,
+    dronePowerMode,
+    setDronePowerMode,
+    originHubId,
+    destHubId,
+    setMeshRoute,
+    priorityMessages
+  } = useAppStore();
+
   const [userLocation, setUserLocation] = useState<[number, number] | null>(null);
   const [isLocating, setIsLocating] = useState(false);
+  const [facilities, setFacilities] = useState<EmergencyFacility[]>([]);
+  const [isTelemetryCollapsed, setIsTelemetryCollapsed] = useState(false);
+
+  const hubA = EMERGENCY_HUBS.find(h => h.id === originHubId) || EMERGENCY_HUBS[0];
+  const hubB = EMERGENCY_HUBS.find(h => h.id === destHubId) || EMERGENCY_HUBS[3];
+
+  const handleDeployOrRefly = () => {
+    if (isDroneDeployed) {
+      recallDrone();
+      setTimeout(() => {
+        deployDrone();
+      }, 150);
+    } else {
+      deployDrone();
+    }
+  };
+
+  const initialCenter: [number, number] = centerCoords || [26.1388, 91.6625];
+
+  // Fetch Real OpenStreetMap Emergency Facilities (Hospitals, Shelters, Fire/Police)
+  useEffect(() => {
+    let isMounted = true;
+    const targetLat = centerCoords ? centerCoords[0] : 26.1388;
+    const targetLng = centerCoords ? centerCoords[1] : 91.6625;
+
+    fetchNearbyEmergencyFacilities(targetLat, targetLng, 15)
+      .then(data => {
+        if (isMounted) setFacilities(data);
+      })
+      .catch(console.error);
+
+    return () => {
+      isMounted = false;
+    };
+  }, [centerCoords]);
 
   const handleLocate = () => {
     if (!navigator.geolocation) {
@@ -158,17 +233,17 @@ export default function MapClient() {
       </div>
 
       <MapContainer
-        center={[26.1388, 91.6625]}
-        zoom={14}
+        center={initialCenter}
+        zoom={13}
         style={{ height: '100%', width: '100%', zIndex: 0 }}
         className="rounded-xl overflow-hidden shadow-2xl grayscale-[0.1] contrast-[1.1]"
-        scrollWheelZoom={false}
+        scrollWheelZoom={true}
       >
-        <LayersControl position="topright">
+        <LayersControl position="bottomleft">
           <LayersControl.BaseLayer checked name="Tactical Dark">
             <TileLayer
-              attribution='&copy; CARTO'
-              url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+              attribution='&copy; Esri World Dark Gray Canvas'
+              url="https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}"
             />
           </LayersControl.BaseLayer>
           <LayersControl.BaseLayer name="Satellite View">
@@ -188,6 +263,7 @@ export default function MapClient() {
         <HeatLayer />
         <MapBounds />
         <UserLocationController userLocation={userLocation} />
+        <TargetCenterController centerCoords={centerCoords} />
 
         {userLocation && (
           <Marker position={userLocation} icon={UserIcon}>
@@ -222,6 +298,31 @@ export default function MapClient() {
           </Marker>
         ))}
 
+        {/* Real OpenStreetMap Emergency Facilities */}
+        {facilities.map(fac => {
+          const icon = fac.type === 'Hospital' ? HospitalIcon : fac.type === 'Shelter' ? ShelterIcon : fac.type === 'Fire Station' ? FireIcon : PoliceIcon;
+          return (
+            <Marker key={fac.id} position={[fac.lat, fac.lng]} icon={icon}>
+              <Popup className="custom-popup">
+                <div className="p-1.5 min-w-[180px]">
+                  <div className="flex items-center space-x-2 border-b border-white/10 pb-1 mb-1.5">
+                    <span className={`px-2 py-0.5 rounded text-[8px] font-black text-white uppercase ${fac.type === 'Hospital' ? 'bg-red-500' : fac.type === 'Shelter' ? 'bg-emerald-500' : fac.type === 'Fire Station' ? 'bg-amber-500' : 'bg-indigo-500'}`}>
+                      {fac.type}
+                    </span>
+                    <h4 className="font-bold text-xs text-white line-clamp-1">{fac.name}</h4>
+                  </div>
+                  <p className="text-[10px] text-neutral-400 font-mono">
+                    {fac.lat.toFixed(4)}°N, {fac.lng.toFixed(4)}°E
+                  </p>
+                  {fac.address && (
+                    <p className="text-[9px] text-neutral-300 mt-1 italic">{fac.address}</p>
+                  )}
+                </div>
+              </Popup>
+            </Marker>
+          );
+        })}
+
         {/* Static Points of Interest (HUBS) */}
         {EMERGENCY_HUBS.map(hub => {
           const HubIcon = L.divIcon({
@@ -252,6 +353,193 @@ export default function MapClient() {
 
         <DroneRelay userLocation={userLocation || [26.1859, 91.7477]} />
       </MapContainer>
+
+      {/* 1. Location A ↔ Location B Selector Card (Top Left) */}
+      <div className="absolute top-4 left-4 z-[500] w-72 pointer-events-auto">
+        <div className="bg-black/90 backdrop-blur-md border border-white/10 rounded-xl p-3.5 shadow-2xl space-y-2.5">
+          <div className="flex items-center justify-between border-b border-white/10 pb-1.5">
+            <div className="flex items-center space-x-2">
+              <Navigation className="w-3.5 h-3.5 text-emerald-400" />
+              <h4 className="text-[10px] font-black uppercase tracking-widest text-white">Inter-Hub Mesh Swarm</h4>
+            </div>
+            <span className="text-[8px] font-mono bg-emerald-500/20 text-emerald-300 px-1.5 py-0.5 rounded border border-emerald-500/30">
+              4 Drones (2+2)
+            </span>
+          </div>
+
+          <div className="space-y-1.5">
+            <div>
+              <label className="text-[8px] font-black uppercase tracking-wider text-emerald-400 mb-0.5 block flex items-center justify-between">
+                <span>Location A (Origin)</span>
+                <span className="text-[7px] text-neutral-400 font-mono">Dispatches 2 Drones</span>
+              </label>
+              <select
+                value={originHubId}
+                onChange={(e) => setMeshRoute(e.target.value, destHubId)}
+                className="w-full bg-white/5 border border-white/10 text-white text-xs font-bold rounded-lg px-2 py-1.5 outline-none focus:border-emerald-500 cursor-pointer"
+              >
+                {EMERGENCY_HUBS.map(hub => (
+                  <option key={hub.id} value={hub.id} className="bg-neutral-900 text-white">
+                    {hub.name} ({hub.id})
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="flex items-center justify-center">
+              <ArrowRight className="w-3 h-3 text-neutral-500 rotate-90" />
+            </div>
+
+            <div>
+              <label className="text-[8px] font-black uppercase tracking-wider text-amber-400 mb-0.5 block flex items-center justify-between">
+                <span>Location B (Destination)</span>
+                <span className="text-[7px] text-neutral-400 font-mono">Dispatches 2 Drones</span>
+              </label>
+              <select
+                value={destHubId}
+                onChange={(e) => setMeshRoute(originHubId, e.target.value)}
+                className="w-full bg-white/5 border border-white/10 text-white text-xs font-bold rounded-lg px-2 py-1.5 outline-none focus:border-amber-500 cursor-pointer"
+              >
+                {EMERGENCY_HUBS.map(hub => (
+                  <option key={hub.id} value={hub.id} disabled={hub.id === originHubId} className="bg-neutral-900 text-white">
+                    {hub.name} ({hub.id})
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          <div className="flex gap-2 pt-1">
+            <button
+              onClick={handleDeployOrRefly}
+              className="flex-1 py-2 bg-emerald-500 hover:bg-emerald-400 text-black text-[10px] font-black uppercase tracking-widest rounded-lg transition-all shadow-[0_0_15px_rgba(16,185,129,0.5)] flex items-center justify-center space-x-1.5 cursor-pointer"
+            >
+              {isDroneDeployed ? (
+                <>
+                  <RotateCcw className="w-3 h-3 animate-spin" />
+                  <span>Re-Fly 4 Drones</span>
+                </>
+              ) : (
+                <>
+                  <Zap className="w-3 h-3" />
+                  <span>Launch 4 Drones</span>
+                </>
+              )}
+            </button>
+
+            {isDroneDeployed && (
+              <button
+                onClick={recallDrone}
+                className="px-3 py-2 bg-neutral-800 hover:bg-neutral-700 text-neutral-300 text-[10px] font-bold uppercase rounded-lg transition-colors cursor-pointer"
+              >
+                Recall
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* 2. Tactical Telemetry HUD (Draggable, Resizable, Collapsible) */}
+      {isDroneDeployed && (
+        <motion.div
+          drag
+          dragMomentum={false}
+          initial={{ x: 0, y: 0 }}
+          className="absolute top-4 right-16 z-[500] pointer-events-auto"
+          style={{ touchAction: 'none' }}
+        >
+          <div className="bg-black/92 backdrop-blur-xl border border-white/20 rounded-2xl p-3.5 shadow-[0_20px_50px_rgba(0,0,0,0.8)] space-y-2.5 text-xs resize-both overflow-hidden min-w-[280px] max-w-[450px] min-h-[140px] max-h-[500px] flex flex-col justify-between">
+            {/* Header / Drag Bar */}
+            <div className="flex items-center justify-between border-b border-white/10 pb-2 cursor-grab active:cursor-grabbing select-none">
+              <div className="flex items-center space-x-2">
+                <GripHorizontal className="w-3.5 h-3.5 text-neutral-500 hover:text-white transition-colors" />
+                <div className="flex items-center space-x-1.5">
+                  <Radio className="w-3.5 h-3.5 text-emerald-400 animate-pulse" />
+                  <h4 className="text-[10px] font-black uppercase tracking-widest text-white">Tactical Telemetry</h4>
+                </div>
+              </div>
+              
+              <div className="flex items-center space-x-1.5">
+                <span className="text-[8px] font-mono text-emerald-400 bg-emerald-500/20 px-1.5 py-0.5 rounded border border-emerald-500/30">
+                  LINK ACTIVE
+                </span>
+                <button
+                  onClick={() => setIsTelemetryCollapsed(!isTelemetryCollapsed)}
+                  className="p-1 hover:bg-white/10 rounded text-neutral-400 hover:text-white transition-colors cursor-pointer"
+                  title={isTelemetryCollapsed ? "Expand Telemetry" : "Collapse Telemetry"}
+                >
+                  {isTelemetryCollapsed ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronUp className="w-3.5 h-3.5" />}
+                </button>
+              </div>
+            </div>
+
+            {/* Collapsible Body */}
+            {!isTelemetryCollapsed && (
+              <div className="flex-1 flex flex-col justify-between space-y-2 overflow-y-auto pr-0.5">
+                {/* Metrics Matrix */}
+                <div className="space-y-1.5 font-mono text-[10px] bg-white/5 p-2.5 rounded-xl border border-white/5">
+                  <div className="flex justify-between items-center">
+                    <span className="text-neutral-400">Swarm Vector:</span>
+                    <span className="text-emerald-400 font-bold bg-emerald-950/40 px-1.5 py-0.5 rounded border border-emerald-500/20">{hubA.id} ↔ {hubB.id}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-neutral-400">Swarm Formation:</span>
+                    <span className="text-white font-semibold flex items-center gap-1">
+                      <span className="w-1.5 h-1.5 rounded-full bg-cyan-400" />
+                      4 Relays (2 Loc A + 2 Loc B)
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-neutral-400">Signal RSSI / SNR:</span>
+                    <span className="text-emerald-400 font-bold">{rfMode === 'lora' ? '-84 dBm (SNR: +9dB)' : '-76 dBm (SNR: +14dB)'}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-neutral-400">DTN Transit Queue:</span>
+                    <span className="text-amber-400 font-bold">{priorityMessages.filter(m => m.status !== 'delivered').length} packets</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-neutral-400">Air Link Encryption:</span>
+                    <span className="text-cyan-300 font-bold">AES-256-GCM OTA</span>
+                  </div>
+                </div>
+
+                {/* Protocol & Power Selectors */}
+                <div className="grid grid-cols-2 gap-2 pt-0.5">
+                  <button
+                    onClick={() => setRfMode(rfMode === 'lora' ? 'cofdm' : 'lora')}
+                    className="p-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg text-[9px] font-mono text-left flex items-center justify-between transition-all hover:border-emerald-500/40 cursor-pointer"
+                  >
+                    <div>
+                      <div className="text-neutral-400 text-[8px]">RF BAND</div>
+                      <span className="text-white font-bold">{rfMode === 'lora' ? '915M LoRa' : '1.4G COFDM'}</span>
+                    </div>
+                    <Wifi className="w-3.5 h-3.5 text-emerald-400 shrink-0 ml-1" />
+                  </button>
+
+                  <button
+                    onClick={() => setDronePowerMode(dronePowerMode === 'battery' ? 'tethered' : 'battery')}
+                    className="p-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg text-[9px] font-mono text-left flex items-center justify-between transition-all hover:border-cyan-500/40 cursor-pointer"
+                  >
+                    <div>
+                      <div className="text-neutral-400 text-[8px]">POWER BUS</div>
+                      <span className="text-white font-bold">{dronePowerMode === 'tethered' ? 'Tether 24h' : 'Battery Swarm'}</span>
+                    </div>
+                    {dronePowerMode === 'tethered' ? <Cable className="w-3.5 h-3.5 text-cyan-400 shrink-0 ml-1" /> : <Battery className="w-3.5 h-3.5 text-amber-400 shrink-0 ml-1" />}
+                  </button>
+                </div>
+
+                <div className="flex items-center justify-between text-[8px] text-neutral-500 font-mono pt-1 border-t border-white/5">
+                  <span>DRAG TO MOVE • PULL CORNER TO RESIZE</span>
+                  <span className="text-neutral-400 flex items-center gap-1">
+                    <Activity className="w-2.5 h-2.5 text-emerald-400" />
+                    LIVE TELEMETRY
+                  </span>
+                </div>
+              </div>
+            )}
+          </div>
+        </motion.div>
+      )}
 
       {/* Viewport HUD */}
       <div className="absolute bottom-4 left-4 z-10 pointer-events-none">
