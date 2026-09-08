@@ -39,7 +39,7 @@ export function MessageFeed({ messages, myPubkey, isConnected }: MessageFeedProp
       <div className="flex-1 flex items-center justify-center p-6">
         <div className="text-center max-w-sm space-y-2">
           <div className="w-12 h-12 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center mx-auto text-xl">
-            📻
+            <Radio className="w-6 h-6 text-indigo-400" />
           </div>
           <p className="text-sm font-bold text-neutral-300">Channel Idle</p>
           <p className="text-xs text-neutral-500 leading-relaxed">

@@ -1,14 +1,16 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAppStore } from '@/store/useAppStore';
 import { DashboardLayout } from '@/components/Layout/DashboardLayout';
 import { ReliefMap } from '@/components/Map/ReliefMap';
 import { NetworkTopology } from '@/components/Network/NetworkTopology';
 import { MessageFeedLive } from '@/components/UI/MessageFeedLive';
-import { AlertTriangle, WifiOff, Plane, ShieldCheck, Send, Activity, Megaphone, Maximize2, Minimize2, Radio, Wifi } from 'lucide-react';
+import { AlertTriangle, WifiOff, Plane, ShieldCheck, Send, Activity, Megaphone, Maximize2, Radio, Wifi, HeartPulse, ShieldAlert, Building2 } from 'lucide-react';
 import { AgencyRole } from '@/lib/types';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
+
+import { fetchLocationNews, NewsArticle } from '@/lib/disasterApi';
 
 export default function CommandCenter() {
   const { 
@@ -28,7 +30,32 @@ export default function CommandCenter() {
   } = useAppStore();
 
   const [selectedRole, setSelectedRole] = useState<AgencyRole>('Health');
-  const [isMapExpanded, setIsMapExpanded] = useState(false);
+  const [worldMonitorNews, setWorldMonitorNews] = useState<NewsArticle[]>([]);
+  const [newsCategory, setNewsCategory] = useState<'ALL' | 'INDIA' | 'FLOOD' | 'SEISMIC' | 'CYCLONE'>('ALL');
+  const [selectedArticle, setSelectedArticle] = useState<NewsArticle | null>(null);
+
+  // Fetch and auto-refresh live GDELT 2.0 & UN GDACS World Monitor disaster news every 60s
+  useEffect(() => {
+    let isMounted = true;
+    async function loadWorldNews() {
+      let q = 'disaster OR emergency OR flood OR earthquake OR cyclone';
+      if (newsCategory === 'INDIA') q = 'India (disaster OR flood OR earthquake OR NDRF OR IMD)';
+      else if (newsCategory === 'FLOOD') q = 'flood OR inundation OR river';
+      else if (newsCategory === 'SEISMIC') q = 'earthquake OR aftershock OR seismic';
+      else if (newsCategory === 'CYCLONE') q = 'cyclone OR typhoon OR storm';
+
+      const news = await fetchLocationNews(q);
+      if (isMounted && news && news.length > 0) {
+        setWorldMonitorNews(news);
+      }
+    }
+    loadWorldNews();
+    const interval = setInterval(loadWorldNews, 60000);
+    return () => {
+      isMounted = false;
+      clearInterval(interval);
+    };
+  }, [newsCategory]);
 
   const demoMessages = [
     { text: "Cardiac arrest at Sector 4, need immediate medevac.", urgency: 5 },
@@ -65,6 +92,37 @@ export default function CommandCenter() {
       severity: r.intensity > 0.7 || r.type === 'Medical' ? 'Critical' : 'High'
     }))
   ].slice(0, 5);
+
+  const renderMapContent = () => (
+    <div className="flex-1 w-full h-full relative overflow-hidden flex flex-col">
+      <div className="absolute top-4 left-4 z-10 flex gap-2">
+        <span className="bg-black/80 backdrop-blur-md px-3 py-1.5 rounded-lg border border-white/10 text-[10px] font-black text-white uppercase tracking-widest shadow-lg">
+          Tactical Map View
+        </span>
+        {isDroneDeployed && (
+          <span className="bg-emerald-950/80 backdrop-blur-md px-3 py-1.5 rounded-lg border border-emerald-500/30 text-[10px] font-black text-emerald-400 uppercase tracking-widest shadow-lg">
+            RF Link Locked
+          </span>
+        )}
+      </div>
+
+      {/* Fullscreen Map Toggle */}
+      <div className="absolute top-4 right-4 z-10">
+        <button
+          onClick={() => window.open('/map-fullscreen', '_blank')}
+          title="Fullscreen Map"
+          className="bg-black/80 hover:bg-neutral-900 border border-white/20 text-white p-2.5 rounded-xl transition-all backdrop-blur-md shadow-xl flex items-center gap-1.5 text-xs font-black uppercase tracking-wider cursor-pointer"
+        >
+          <Maximize2 className="w-4 h-4 text-cyan-400" />
+          <span>Fullscreen Map</span>
+        </button>
+      </div>
+
+      <div className="flex-1 w-full relative bg-navy overflow-hidden">
+        <ReliefMap rawContainer />
+      </div>
+    </div>
+  );
 
   return (
     <DashboardLayout>
@@ -142,46 +200,12 @@ export default function CommandCenter() {
         <div className="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-6 relative z-10">
           
           {/* Left: Map & Drone View */}
-          <div className={`${isMapExpanded ? 'lg:col-span-12 h-[680px]' : 'lg:col-span-7 min-h-[440px]'} flex flex-col glass-panel rounded-3xl overflow-hidden border border-white/5 relative shadow-2xl transition-all duration-300`}>
-            <div className="absolute top-4 left-4 z-10 flex gap-2">
-              <span className="bg-black/80 backdrop-blur-md px-3 py-1.5 rounded-lg border border-white/10 text-[10px] font-black text-white uppercase tracking-widest shadow-lg">
-                Tactical Map View
-              </span>
-              {isDroneDeployed && (
-                <span className="bg-emerald-950/80 backdrop-blur-md px-3 py-1.5 rounded-lg border border-emerald-500/30 text-[10px] font-black text-emerald-400 uppercase tracking-widest shadow-lg">
-                  RF Link Locked
-                </span>
-              )}
-            </div>
-            
-            {/* Expand / Minimize Tactical Map Toggle */}
-            <div className="absolute top-4 right-4 z-10">
-              <button
-                onClick={() => setIsMapExpanded(!isMapExpanded)}
-                title={isMapExpanded ? "Collapse Map View" : "Expand Fullscreen Map"}
-                className="bg-black/80 hover:bg-neutral-900 border border-white/20 text-white p-2 rounded-xl transition-all backdrop-blur-md shadow-xl flex items-center gap-1.5 text-[10px] font-black uppercase tracking-wider cursor-pointer"
-              >
-                {isMapExpanded ? (
-                  <>
-                    <Minimize2 className="w-3.5 h-3.5 text-amber-400" />
-                    <span className="hidden sm:inline">Compact View</span>
-                  </>
-                ) : (
-                  <>
-                    <Maximize2 className="w-3.5 h-3.5 text-cyan-400" />
-                    <span className="hidden sm:inline">Expand Map</span>
-                  </>
-                )}
-              </button>
-            </div>
-
-            <div className="flex-1 w-full bg-navy relative min-h-[400px]">
-              <ReliefMap />
-            </div>
+          <div className="lg:col-span-7 min-h-[440px] flex flex-col glass-panel rounded-3xl overflow-hidden border border-white/5 relative shadow-2xl">
+            {renderMapContent()}
           </div>
 
           {/* Right: Topology & Feed */}
-          <div className={`${isMapExpanded ? 'lg:col-span-12 grid grid-cols-1 md:grid-cols-2 gap-6' : 'lg:col-span-5 flex flex-col gap-6'}`}>
+          <div className="lg:col-span-5 flex flex-col gap-6">
             
             {/* Topology Graph */}
             <div className="h-[350px] shrink-0">
@@ -234,55 +258,134 @@ export default function CommandCenter() {
 
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
               {[
-                { agency: 'Health Teams', icon: '🚑', weight: '10', status: networkMode === 'normal' ? 'Cellular' : 'Drone Mesh', color: 'emerald' },
-                { agency: 'NDRF Squads', icon: '🦺', weight: '9', status: networkMode === 'normal' ? 'Cellular' : 'LoRa P2P', color: 'amber' },
-                { agency: 'Local Admin', icon: '🏛️', weight: '8', status: networkMode === 'normal' ? 'Cellular' : 'Satellite', color: 'blue' },
-                { agency: 'Police Force', icon: '🚓', weight: '6', status: networkMode === 'normal' ? 'Cellular' : 'BLE Mesh', color: 'indigo' },
-              ].map((team, idx) => (
-                <div key={idx} className="bg-white/5 border border-white/10 rounded-xl p-2.5 flex flex-col justify-between">
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="text-sm">{team.icon}</span>
-                    <span className="text-[8px] font-mono text-neutral-400 bg-white/10 px-1 rounded">W: {team.weight}</span>
-                  </div>
+                { agency: 'Health Teams', icon: HeartPulse, weight: '10', status: networkMode === 'normal' ? 'Cellular' : 'Drone Mesh', color: 'text-emerald-400' },
+                { agency: 'NDRF Squads', icon: ShieldAlert, weight: '9', status: networkMode === 'normal' ? 'Cellular' : 'LoRa P2P', color: 'text-amber-400' },
+                { agency: 'Local Admin', icon: Activity, weight: '8', status: networkMode === 'normal' ? 'Cellular' : 'Satellite', color: 'text-blue-400' },
+                { agency: 'Police Force', icon: Radio, weight: '6', status: networkMode === 'normal' ? 'Cellular' : 'BLE Mesh', color: 'text-indigo-400' },
+              ].map((team, idx) => {
+                const IconComp = team.icon;
+                return (
+                  <div key={idx} className="bg-white/5 border border-white/10 rounded-xl p-2.5 flex flex-col justify-between">
+                    <div className="flex items-center justify-between mb-1">
+                      <IconComp className={`w-4 h-4 ${team.color}`} />
+                      <span className="text-[8px] font-mono text-neutral-400 bg-white/10 px-1.5 py-0.5 rounded">W: {team.weight}</span>
+                    </div>
                   <p className="text-[11px] font-bold text-white truncate">{team.agency}</p>
                   <p className="text-[9px] font-mono text-emerald-400 mt-1 flex items-center gap-1">
                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
                     {team.status}
                   </p>
                 </div>
-              ))}
+                );
+              })}
             </div>
           </div>
 
           {/* Right: Live World Monitor Intel Feed */}
           <div className="md:col-span-5 glass-panel p-4 rounded-2xl border border-white/10 flex flex-col justify-between">
-            <div className="flex items-center justify-between border-b border-white/10 pb-2 mb-2">
-              <h3 className="text-xs font-black text-white uppercase tracking-widest flex items-center gap-2">
-                <Megaphone className="w-4 h-4 text-amber-400" />
-                Live Disaster Intel & News Feed
-              </h3>
-              <span className="text-[9px] font-mono text-amber-400 animate-pulse">WORLD MONITOR LIVE</span>
+            <div className="flex flex-col gap-2 border-b border-white/10 pb-2 mb-2">
+              <div className="flex items-center justify-between">
+                <h3 className="text-xs font-black text-white uppercase tracking-widest flex items-center gap-2">
+                  <Megaphone className="w-4 h-4 text-amber-400" />
+                  Live Disaster Intel Feed
+                </h3>
+                <span className="text-[9px] font-mono text-amber-400 animate-pulse">WORLD MONITOR LIVE</span>
+              </div>
+
+              {/* Category Filter Pills */}
+              <div className="flex items-center gap-1 overflow-x-auto custom-scrollbar pb-1">
+                {(['ALL', 'INDIA', 'FLOOD', 'SEISMIC', 'CYCLONE'] as const).map(cat => (
+                  <button
+                    key={cat}
+                    onClick={() => setNewsCategory(cat)}
+                    className={`px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-wider transition-all cursor-pointer ${
+                      newsCategory === cat 
+                        ? 'bg-amber-500 text-black shadow-md' 
+                        : 'bg-white/5 text-neutral-400 hover:bg-white/10 hover:text-white border border-white/5'
+                    }`}
+                  >
+                    {cat}
+                  </button>
+                ))}
+              </div>
             </div>
 
-            <div className="space-y-1.5 overflow-hidden">
-              {[
-                { time: '17:58', source: 'SEISMIC', text: 'M4.8 Aftershock detected 14km NW. Drone mesh telemetry stable.', tag: 'CRITICAL' },
-                { time: '17:55', source: 'METEO', text: 'River Water Level: +1.4m. Sector 7 flood warning active.', tag: 'WARNING' },
-                { time: '17:50', source: 'FIELD', text: 'NDRF Squad B established LoRa P2P node at City Hospital.', tag: 'INFO' },
-              ].map((news, idx) => (
-                <div key={idx} className="flex items-center justify-between text-[10px] bg-white/5 p-1.5 rounded border border-white/5">
-                  <div className="flex items-center space-x-2 truncate">
-                    <span className="font-mono text-neutral-400 shrink-0">{news.time}</span>
-                    <span className="font-bold text-amber-400 shrink-0">[{news.source}]</span>
-                    <span className="text-white truncate">{news.text}</span>
-                  </div>
-                  <span className={`text-[8px] font-mono px-1 rounded shrink-0 ${news.tag === 'CRITICAL' ? 'bg-red-500/20 text-red-400' : news.tag === 'WARNING' ? 'bg-amber-500/20 text-amber-400' : 'bg-blue-500/20 text-blue-400'}`}>
-                    {news.tag}
-                  </span>
+            <div className="space-y-2 overflow-y-auto max-h-[160px] custom-scrollbar pr-1">
+              {worldMonitorNews.length > 0 ? (
+                worldMonitorNews.map((news, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => setSelectedArticle(news)}
+                    className="w-full text-left flex items-center justify-between text-[10px] bg-white/5 hover:bg-white/10 p-2 rounded-xl border border-white/5 transition-colors group cursor-pointer"
+                  >
+                    <div className="flex items-center space-x-2 truncate">
+                      <span className="font-mono text-neutral-400 shrink-0 text-[8.5px]">{news.seendate}</span>
+                      <span className="font-bold text-amber-400 shrink-0 text-[9px]">[{news.source}]</span>
+                      <span className="text-white font-medium truncate group-hover:text-amber-300">{news.title}</span>
+                    </div>
+                    <span className="text-[8px] font-mono px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30 shrink-0 ml-2">
+                      INTEL
+                    </span>
+                  </button>
+                ))
+              ) : (
+                <div className="p-3 text-center text-neutral-400 text-xs italic">
+                  Connecting to GDELT 2.0 & UN GDACS Live Feed...
                 </div>
-              ))}
+              )}
             </div>
           </div>
+
+          {/* World Monitor Intel Briefing Modal */}
+          <AnimatePresence>
+            {selectedArticle && (
+              <div className="fixed inset-0 z-[9999999] bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.9 }}
+                  className="bg-neutral-950 border border-neutral-800 rounded-3xl p-6 max-w-lg w-full text-white shadow-2xl space-y-4"
+                >
+                  <div className="flex items-center justify-between border-b border-white/10 pb-3">
+                    <div className="flex items-center space-x-2">
+                      <Megaphone className="w-5 h-5 text-amber-400 animate-pulse" />
+                      <h3 className="text-sm font-black uppercase tracking-wider text-amber-400">World Monitor Intel Briefing</h3>
+                    </div>
+                    <button onClick={() => setSelectedArticle(null)} className="p-1 hover:bg-white/10 rounded-lg text-neutral-400 hover:text-white">
+                      ✕
+                    </button>
+                  </div>
+
+                  <div className="space-y-2">
+                    <span className="text-[9px] font-mono bg-amber-500/20 text-amber-300 px-2 py-0.5 rounded border border-amber-500/30">
+                      SOURCE: {selectedArticle.source} • {selectedArticle.seendate}
+                    </span>
+                    <h4 className="text-base font-bold text-white leading-snug">{selectedArticle.title}</h4>
+                    <p className="text-xs text-neutral-400 leading-relaxed italic">
+                      Real-time disaster telemetry captured via GDELT 2.0 & UN GDACS global surveillance feeds.
+                    </p>
+                  </div>
+
+                  <div className="flex gap-3 pt-2">
+                    <a
+                      href={selectedArticle.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex-1 py-2.5 bg-amber-500 hover:bg-amber-400 text-black text-xs font-black uppercase tracking-widest rounded-xl text-center transition-all shadow-lg shadow-amber-500/20"
+                    >
+                      Read Full Article →
+                    </a>
+                    <button
+                      onClick={() => setSelectedArticle(null)}
+                      className="px-4 py-2.5 bg-neutral-800 hover:bg-neutral-700 text-neutral-300 text-xs font-bold uppercase rounded-xl"
+                    >
+                      Close Briefing
+                    </button>
+                  </div>
+                </motion.div>
+              </div>
+            )}
+          </AnimatePresence>
 
         </div>
 

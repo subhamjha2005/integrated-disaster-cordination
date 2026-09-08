@@ -31,7 +31,7 @@ export const COMM_MEDIUMS: Record<CommMedium, MediumSpec> = {
     id: 'internet',
     name: 'Wide-Area Internet / Satellite Relay',
     badge: 'INTERNET',
-    icon: '🌐',
+    icon: 'Globe',
     color: '#38bdf8', // sky-400
     bgGlow: 'rgba(56, 189, 248, 0.2)',
     frequency: 'Cellular LTE / 5G / Starlink Ku-Band',
@@ -63,7 +63,7 @@ export const COMM_MEDIUMS: Record<CommMedium, MediumSpec> = {
     id: 'wifi',
     name: 'Local Wi-Fi Mesh / LAN Broadcast',
     badge: 'WI-FI MESH',
-    icon: '📡',
+    icon: 'Radio',
     color: '#34d399', // emerald-400
     bgGlow: 'rgba(52, 211, 153, 0.2)',
     frequency: '2.4 GHz (802.11b/g/n) / 5.8 GHz (802.11ac)',
@@ -95,7 +95,7 @@ export const COMM_MEDIUMS: Record<CommMedium, MediumSpec> = {
     id: 'bluetooth',
     name: 'Bluetooth BLE P2P Proximity Mesh',
     badge: 'BLUETOOTH BLE',
-    icon: '📶',
+    icon: 'Wifi',
     color: '#a78bfa', // violet-400
     bgGlow: 'rgba(167, 139, 250, 0.2)',
     frequency: '2.402 GHz - 2.480 GHz (ISM Band)',
@@ -145,7 +145,7 @@ export const EMERGENCY_CODES: Record<string, EmergencyCode> = {
     agencyName: 'Police Command & Rapid Action',
     channelId: 'agency-police',
     title: 'Police Station & Law Enforcement',
-    icon: '🚓',
+    icon: 'ShieldAlert',
     color: '#818cf8', // indigo-400
     urgencyLevel: 4,
     description: 'Civil protection, riot / looting deterrence, perimeter lockdown, evacuation traffic cordon.',
@@ -157,7 +157,7 @@ export const EMERGENCY_CODES: Record<string, EmergencyCode> = {
     agencyName: 'Nearest Hospital & Trauma Center',
     channelId: 'agency-health',
     title: 'Nearest Hospital / Medical Trauma',
-    icon: '🏥',
+    icon: 'HeartPulse',
     color: '#f43f5e', // rose-500
     urgencyLevel: 5,
     description: 'Life-threatening trauma, cardiac arrest, crush syndrome, ambulance evacuation, mass triage.',
@@ -169,7 +169,7 @@ export const EMERGENCY_CODES: Record<string, EmergencyCode> = {
     agencyName: 'Fire Brigade & Hazmat Squad',
     channelId: 'agency-fire',
     title: 'Fire Station & Hazmat Control',
-    icon: '🚒',
+    icon: 'Flame',
     color: '#f97316', // orange-500
     urgencyLevel: 4,
     description: 'Structural fires, chemical spills, gas pipeline leaks, confined space extraction.',
@@ -181,7 +181,7 @@ export const EMERGENCY_CODES: Record<string, EmergencyCode> = {
     agencyName: 'NDRF Disaster & Flood Rescue',
     channelId: 'agency-ndrf',
     title: 'Disaster Search & Rescue (NDRF)',
-    icon: '🦺',
+    icon: 'Activity',
     color: '#fbbf24', // amber-400
     urgencyLevel: 5,
     description: 'Collapsed buildings, flood rescue boats, canine search teams, heavy equipment extraction.',
@@ -193,7 +193,7 @@ export const EMERGENCY_CODES: Record<string, EmergencyCode> = {
     agencyName: 'Medical Supplies & Blood Bank',
     channelId: 'agency-health',
     title: 'Blood Bank & Medical Rations',
-    icon: '🩸',
+    icon: 'Heart',
     color: '#ec4899', // pink-500
     urgencyLevel: 4,
     description: 'Urgent demand for blood units (O-negative, platelets), oxygen cylinders, and sterile surgical kits.',

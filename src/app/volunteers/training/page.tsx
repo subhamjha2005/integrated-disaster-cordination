@@ -138,6 +138,7 @@ export default function TrainingHubPage() {
                                         key={item.name}
                                         href={item.link}
                                         target="_blank"
+                                        rel="noopener noreferrer"
                                         className="flex items-center justify-between p-5 bg-black/40 border border-white/5 rounded-2xl hover:bg-black/60 hover:border-white/20 transition-all group"
                                     >
                                         <div className="flex items-center space-x-4">

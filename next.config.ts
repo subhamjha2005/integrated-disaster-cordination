@@ -1,10 +1,18 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  compress: true,
+  poweredByHeader: false,
   reactCompiler: true,
   experimental: {
-    optimizePackageImports: ["lucide-react", "recharts", "framer-motion", "date-fns"],
+    optimizePackageImports: [
+      "lucide-react",
+      "recharts",
+      "framer-motion",
+      "date-fns",
+      "leaflet",
+      "zustand"
+    ],
   },
 };
 

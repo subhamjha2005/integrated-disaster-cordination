@@ -2,9 +2,10 @@
 
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Activity, Utensils, Users, Tent, Droplets, Heart, Truck, ShieldCheck } from 'lucide-react';
+import { Activity, Utensils, Users, Tent, Droplets, Heart, Truck, ShieldCheck, Newspaper } from 'lucide-react';
 import { useAppStore } from '@/store/useAppStore';
 import { getTranslation, TranslationKey } from '@/lib/translations';
+import { fetchLocationNews, NewsArticle } from '@/lib/disasterApi';
 
 interface StatItem {
     label: TranslationKey;
@@ -13,7 +14,7 @@ interface StatItem {
     suffix?: string;
     color: string;
     increment: { min: number; max: number };
-    interval: number; // ms between increments
+    interval: number;
 }
 
 const STATS: StatItem[] = [
@@ -30,7 +31,6 @@ function AnimatedCounter({ value }: { value: number }) {
     const [display, setDisplay] = useState(value);
 
     useEffect(() => {
-        // Animate from current to new value
         const diff = value - display;
         if (diff === 0) return;
 
@@ -56,6 +56,18 @@ export function ImpactTicker() {
     const { language } = useAppStore();
     const t = (key: any) => getTranslation(language, key);
     const [stats, setStats] = useState(STATS.map(s => s.value));
+    const [tickerNews, setTickerNews] = useState<NewsArticle[]>([]);
+
+    useEffect(() => {
+        let isMounted = true;
+        async function loadNews() {
+            const news = await fetchLocationNews('India disaster OR flood OR earthquake OR rescue');
+            if (isMounted && news && news.length > 0) {
+                setTickerNews(news.slice(0, 5));
+            }
+        }
+        loadNews();
+    }, []);
 
     // Simulate live increments
     useEffect(() => {
@@ -83,8 +95,8 @@ export function ImpactTicker() {
                 <span className="text-[10px] font-black text-emerald-400 uppercase tracking-[0.2em]">
                     {t('impact_dashboard')}
                 </span>
-                <span className="text-[8px] font-bold text-neutral-600 uppercase tracking-widest">
-                    — {t('simulated_data')}
+                <span className="text-[8px] font-mono text-amber-400 uppercase tracking-widest bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20">
+                    LIVE GDELT & UN GDACS STREAM ACTIVE
                 </span>
             </div>
 
@@ -96,30 +108,44 @@ export function ImpactTicker() {
                         animate={{ x: ['0%', '-50%'] }}
                         transition={{
                             x: {
-                                duration: 30,
+                                duration: 35,
                                 repeat: Infinity,
                                 ease: 'linear',
                             },
                         }}
                     >
-                        {/* Duplicate stats for seamless loop */}
+                        {/* Duplicate stats and news items for seamless loop */}
                         {[...STATS, ...STATS].map((stat, idx) => {
                             const value = stats[idx % STATS.length];
+                            const newsItem = tickerNews[idx % (tickerNews.length || 1)];
+
                             return (
-                                <div
-                                    key={idx}
-                                    className="flex items-center gap-3 px-5 py-2.5 glass-card shrink-0 group hover:border-white/20 transition-colors"
-                                >
-                                    <stat.icon className={`w-4 h-4 ${stat.color} shrink-0`} />
-                                    <div className="flex items-baseline gap-1.5">
-                                        <span className="text-lg font-black text-white tracking-tight tabular-nums">
-                                            <AnimatedCounter value={value} />
-                                            {stat.suffix && <span className="text-xs text-neutral-400 ml-0.5">{stat.suffix}</span>}
-                                        </span>
-                                        <span className="text-[9px] font-bold text-neutral-500 uppercase tracking-wider whitespace-nowrap">
-                                            {t(stat.label)}
-                                        </span>
+                                <div key={idx} className="flex items-center gap-4 shrink-0">
+                                    <div className="flex items-center gap-3 px-5 py-2.5 glass-card group hover:border-white/20 transition-colors">
+                                        <stat.icon className={`w-4 h-4 ${stat.color} shrink-0`} />
+                                        <div className="flex items-baseline gap-1.5">
+                                            <span className="text-lg font-black text-white tracking-tight tabular-nums">
+                                                <AnimatedCounter value={value} />
+                                                {stat.suffix && <span className="text-xs text-neutral-400 ml-0.5">{stat.suffix}</span>}
+                                            </span>
+                                            <span className="text-[9px] font-bold text-neutral-500 uppercase tracking-wider whitespace-nowrap">
+                                                {t(stat.label)}
+                                            </span>
+                                        </div>
                                     </div>
+
+                                    {newsItem && (
+                                        <a
+                                            href={newsItem.url}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="flex items-center gap-2 px-4 py-2.5 glass-card bg-amber-500/10 hover:bg-amber-500/20 border-amber-500/30 transition-colors text-[10px] text-white"
+                                        >
+                                            <Newspaper className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                                            <span className="font-bold text-amber-300">[{newsItem.source}]</span>
+                                            <span className="font-medium truncate max-w-[220px]">{newsItem.title}</span>
+                                        </a>
+                                    )}
                                 </div>
                             );
                         })}

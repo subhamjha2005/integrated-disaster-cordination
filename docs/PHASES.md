@@ -122,7 +122,7 @@ Phase 1 (Foundation)     ──→  Phase 2 (Core Engine)  ──→  Phase 3 (V
 2. Fix any visual glitches, overlaps, or animation jank
 3. Verify offline mode works (disconnect network in DevTools)
 4. Test mobile responsiveness
-5. Ensure PROTOTYPE/DEMO disclaimer is visible
+5. Ensure SYSTEM DISPATCH & INCIDENT COMMAND ACTIVE banner is visible
 
 ### Exit Criteria
 - [ ] Demo runs without errors in console

@@ -15,7 +15,6 @@ import {
   Zap,
   ChevronRight,
   Maximize2,
-  Minimize2,
   Bot,
   Package
 } from 'lucide-react';
@@ -23,6 +22,7 @@ import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 
 import { DonationTracker } from '@/components/UI/DonationTracker';
+import { LiveTelemetryStream } from '@/components/UI/LiveTelemetryStream';
 import { DashboardLayout } from '@/components/Layout/DashboardLayout';
 import { ImpactTicker } from '@/components/UI/ImpactTicker';
 import { getTranslation } from '@/lib/translations';
@@ -31,11 +31,55 @@ export default function CinematicHome() {
   const { camps, alerts, language } = useAppStore();
   const [viewMode, setViewMode] = useState<'globe' | 'map'>('globe');
   const [selectedCoords, setSelectedCoords] = useState<[number, number]>([26.1388, 91.6625]);
-  const [isFullscreen, setIsFullscreen] = useState(false);
 
   const t = (key: any) => getTranslation(language, key);
 
   const criticalAlerts = alerts.filter(a => a.type === 'Critical');
+
+  const renderMapContent = () => (
+    <AnimatePresence mode="wait">
+      {viewMode === 'globe' ? (
+        <motion.div
+          key="globe"
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          exit={{ opacity: 0, scale: 2, filter: 'blur(10px)' }}
+          transition={{ duration: 1.5, ease: [0.4, 0, 0.2, 1] }}
+          className="w-full h-full"
+        >
+          <StrategicGlobe onEngage={(coords) => {
+            if (coords && typeof coords.lat === 'number' && typeof coords.lng === 'number') {
+              setSelectedCoords([coords.lat, coords.lng]);
+            }
+            setViewMode('map');
+          }} />
+
+          <div className="absolute top-8 right-8 space-y-4 pointer-events-none text-right">
+            <HUDIndicator label={t('satellite_sync')} value={t('encrypted')} />
+            <HUDIndicator label={t('orbital_alt')} value="450KM" />
+          </div>
+        </motion.div>
+      ) : (
+        <motion.div
+          key="map"
+          initial={{ opacity: 0, scale: 0.7, filter: 'blur(20px)' }}
+          animate={{ opacity: 1, scale: 1, filter: 'blur(0px)' }}
+          exit={{ opacity: 0, scale: 0.8 }}
+          transition={{ duration: 1.5, ease: [0.4, 0, 0.2, 1] }}
+          className="w-full h-full relative"
+        >
+          <ReliefMap centerCoords={selectedCoords} />
+          <div className="absolute inset-0 pointer-events-none shadow-[inset_0_0_100px_rgba(99,102,241,0.2)]"></div>
+          <button
+            onClick={() => setViewMode('globe')}
+            className="absolute top-6 left-6 z-[1000] px-4 py-2 bg-neutral-900/90 backdrop-blur-md border border-white/20 text-white text-[10px] font-black uppercase tracking-widest rounded-lg hover:bg-white hover:text-black transition-all shadow-xl"
+          >
+            ← {t('return_orbit')}
+          </button>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  );
 
   return (
     <DashboardLayout>
@@ -46,69 +90,20 @@ export default function CinematicHome() {
         <ImpactTicker />
 
         {/* Hero Section with Live 3D/2D Toggle */}
-        <section className={`relative z-10 grid grid-cols-1 xl:grid-cols-4 gap-8 ${isFullscreen ? '' : 'xl:h-[calc(100vh-12rem)]'}`}>
+        <section className="relative z-10 grid grid-cols-1 xl:grid-cols-4 gap-8 xl:h-[calc(100vh-12rem)]">
 
           {/* Cinematic Map Container */}
-          <div className={`
-            ${isFullscreen
-              ? 'fixed inset-0 z-[10000] rounded-0'
-              : 'xl:col-span-3 h-[500px] xl:h-full relative rounded-3xl overflow-hidden glass-panel group shadow-xl'
-            } transition-all duration-500 ease-in-out`}>
-
-            {/* Fullscreen Toggle Button */}
+          <div className="xl:col-span-3 h-[500px] xl:h-full relative rounded-3xl overflow-hidden glass-panel group shadow-xl transition-all duration-300 ease-in-out">
             <button
-              onClick={() => setIsFullscreen(!isFullscreen)}
-              className="absolute top-6 right-20 z-[1001] p-3 neo-btn text-white rounded-xl hover:text-powder"
-              title={isFullscreen ? t('exit_fullscreen') : t('enter_fullscreen')}
+              onClick={() => window.open('/map-fullscreen', '_blank')}
+              className="absolute top-6 right-6 z-[1001] p-3 bg-neutral-900/90 backdrop-blur-md border border-white/20 text-white rounded-xl hover:bg-white hover:text-black transition-all shadow-2xl flex items-center gap-2 text-xs font-black uppercase tracking-wider cursor-pointer"
+              title={t('enter_fullscreen')}
             >
-              {isFullscreen ? <Minimize2 className="w-5 h-5" /> : <Maximize2 className="w-5 h-5" />}
+              <Maximize2 className="w-4 h-4" />
+              <span className="hidden sm:inline">Fullscreen</span>
             </button>
 
-            <AnimatePresence mode="wait">
-              {viewMode === 'globe' ? (
-                <motion.div
-                  key="globe"
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 2, filter: 'blur(10px)' }}
-                  transition={{ duration: 1.5, ease: [0.4, 0, 0.2, 1] }}
-                  className="w-full h-full"
-                >
-                  <StrategicGlobe onEngage={(coords) => {
-                    if (coords && typeof coords.lat === 'number' && typeof coords.lng === 'number') {
-                      setSelectedCoords([coords.lat, coords.lng]);
-                    }
-                    setViewMode('map');
-                  }} />
-
-                  {/* Globe HUD Overlay */}
-                  <div className="absolute top-8 right-8 space-y-4 pointer-events-none text-right">
-                    <HUDIndicator label={t('satellite_sync')} value={t('encrypted')} />
-                    <HUDIndicator label={t('orbital_alt')} value="450KM" />
-                  </div>
-
-
-                </motion.div>
-              ) : (
-                <motion.div
-                  key="map"
-                  initial={{ opacity: 0, scale: 0.7, filter: 'blur(20px)' }}
-                  animate={{ opacity: 1, scale: 1, filter: 'blur(0px)' }}
-                  exit={{ opacity: 0, scale: 0.8 }}
-                  transition={{ duration: 1.5, ease: [0.4, 0, 0.2, 1] }}
-                  className="w-full h-full relative"
-                >
-                  <ReliefMap centerCoords={selectedCoords} />
-                  <div className="absolute inset-0 pointer-events-none shadow-[inset_0_0_100px_rgba(99,102,241,0.2)]"></div>
-                  <button
-                    onClick={() => setViewMode('globe')}
-                    className="absolute top-6 left-6 z-[1000] px-4 py-2 bg-navy-panel/80 backdrop-blur-md border border-white/10 text-white text-[10px] font-black uppercase tracking-widest rounded-lg hover:bg-white hover:text-black transition-all"
-                  >
-                    ← {t('return_orbit')}
-                  </button>
-                </motion.div>
-              )}
-            </AnimatePresence>
+            {renderMapContent()}
           </div>
 
           {/* Public Interface Sidebar */}

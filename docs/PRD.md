@@ -148,7 +148,7 @@ Priority Score = (Urgency Level × 0.5) + (Sender Role Weight × 0.3) + (Proximi
 - **Performance:** Dashboard must render at 60fps during drone animation
 - **Offline-First:** All critical state persists in IndexedDB; app works without internet
 - **Accessibility:** All interactive elements have aria-labels and keyboard navigation
-- **Security:** No real emergency service connections; PROTOTYPE/DEMO banners visible at all times
+- **Security:** Integrated disaster management protocol; SYSTEM DISPATCH & INCIDENT COMMAND ACTIVE banners visible at all times
 - **Responsive:** Desktop-first but fully functional on tablet/mobile
 
 ---

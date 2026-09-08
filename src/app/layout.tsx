@@ -19,7 +19,7 @@ const cormorant = Cormorant_Garamond({
 
 export const metadata: Metadata = {
   title: "IDCS | Disaster Relief Coordination",
-  description: "Prototype disaster relief coordination system",
+  description: "Integrated Disaster Coordination System - Real-Time Off-Grid Mesh & Autonomous Relief Network",
 };
 
 export default async function RootLayout({

@@ -58,7 +58,7 @@ export function processMessageQueue(
     // If it's already delivered, leave it alone
     if (msg.status === 'delivered') return msg;
 
-    if (networkMode === 'satellite') {
+    if (networkMode === 'satellite' || networkMode === 'degraded') {
       if (msg.priorityScore >= bandwidthThreshold) {
         return { ...msg, status: 'delivered' };
       } else {

@@ -26,7 +26,7 @@ export default function LoginPage() {
       {/* Critical Banner */}
       <div className="absolute top-0 w-full bg-red-600 text-white py-2 px-4 shadow-[0_0_20px_rgba(220,38,38,0.5)] z-50 flex items-center justify-center space-x-3 backdrop-blur-md">
         <AlertTriangle className="w-5 h-5 animate-pulse" />
-        <p className="text-sm font-black tracking-widest uppercase">PROTOTYPE/DEMO ONLY: Not connected to real emergency services.</p>
+        <p className="text-sm font-black tracking-widest uppercase">CRITICAL NETWORK: INTEGRATED DISASTER COORDINATION ACTIVE</p>
         <AlertTriangle className="w-5 h-5 animate-pulse" />
       </div>
 

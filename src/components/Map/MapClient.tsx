@@ -1,14 +1,14 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, useMap, LayersControl } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, useMap, useMapEvents, LayersControl } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import 'leaflet.heat';
 import { useAppStore } from '@/store/useAppStore';
-import { Crosshair, MapPin, Loader2, Layers, Zap, Navigation, ArrowRight, Radio, Battery, Cable, Wifi, RotateCcw, GripHorizontal, ChevronDown, ChevronUp, Activity, Sparkles } from 'lucide-react';
+import { Crosshair, MapPin, Loader2, Layers, Zap, Navigation, ArrowRight, Radio, Battery, Cable, Wifi, RotateCcw, GripHorizontal, ChevronDown, ChevronUp, Activity, Sparkles, Newspaper, CloudRain, Thermometer, Wind, Waves, X } from 'lucide-react';
 import { DroneRelay, EMERGENCY_HUBS } from './DroneRelay';
-import { fetchNearbyEmergencyFacilities, EmergencyFacility } from '@/lib/disasterApi';
+import { fetchNearbyEmergencyFacilities, EmergencyFacility, fetchLiveTelemetry, LiveTelemetryData, fetchOpenMeteoFlood, LiveFloodData, fetchLocationNews, NewsArticle } from '@/lib/disasterApi';
 import { motion } from 'framer-motion';
 
 // Custom Emergency Icons for OpenStreetMap Facilities
@@ -102,6 +102,35 @@ function MapBounds() {
   return null;
 }
 
+// Auto-invalidate size when container toggles or window resizes
+function MapResizeObserver() {
+  const map = useMap();
+  useEffect(() => {
+    const container = map.getContainer();
+    if (!container) return;
+
+    const observer = new ResizeObserver(() => {
+      map.invalidateSize();
+    });
+
+    observer.observe(container);
+    map.invalidateSize();
+
+    const t1 = setTimeout(() => map.invalidateSize(), 100);
+    const t2 = setTimeout(() => map.invalidateSize(), 300);
+    const t3 = setTimeout(() => map.invalidateSize(), 800);
+
+    return () => {
+      observer.disconnect();
+      clearTimeout(t1);
+      clearTimeout(t2);
+      clearTimeout(t3);
+    };
+  }, [map]);
+
+  return null;
+}
+
 // User Location Controller
 function UserLocationController({ userLocation }: {
   userLocation: [number, number] | null
@@ -130,6 +159,16 @@ function TargetCenterController({ centerCoords }: { centerCoords?: [number, numb
   return null;
 }
 
+// Map Click Event Listener for Location News & Telemetry
+function MapClickHandler({ onMapClick }: { onMapClick: (lat: number, lng: number) => void }) {
+  useMapEvents({
+    click(e) {
+      onMapClick(e.latlng.lat, e.latlng.lng);
+    }
+  });
+  return null;
+}
+
 export default function MapClient({ centerCoords }: { centerCoords?: [number, number] }) {
   const camps = useAppStore(state => state.camps);
   const {
@@ -150,6 +189,31 @@ export default function MapClient({ centerCoords }: { centerCoords?: [number, nu
   const [isLocating, setIsLocating] = useState(false);
   const [facilities, setFacilities] = useState<EmergencyFacility[]>([]);
   const [isTelemetryCollapsed, setIsTelemetryCollapsed] = useState(false);
+
+  const [clickedPoint, setClickedPoint] = useState<{ lat: number; lng: number } | null>(null);
+  const [pointTelemetry, setPointTelemetry] = useState<LiveTelemetryData | null>(null);
+  const [pointFlood, setPointFlood] = useState<LiveFloodData | null>(null);
+  const [pointNews, setPointNews] = useState<NewsArticle[]>([]);
+
+  useEffect(() => {
+    if (!clickedPoint) return;
+    let isMounted = true;
+    async function loadClickData() {
+      if (!clickedPoint) return;
+      const [telemetry, flood, news] = await Promise.allSettled([
+        fetchLiveTelemetry(clickedPoint.lat, clickedPoint.lng),
+        fetchOpenMeteoFlood(clickedPoint.lat, clickedPoint.lng),
+        fetchLocationNews('', clickedPoint.lat, clickedPoint.lng)
+      ]);
+      if (isMounted) {
+        if (telemetry.status === 'fulfilled') setPointTelemetry(telemetry.value);
+        if (flood.status === 'fulfilled') setPointFlood(flood.value);
+        if (news.status === 'fulfilled') setPointNews(news.value || []);
+      }
+    }
+    loadClickData();
+    return () => { isMounted = false; };
+  }, [clickedPoint]);
 
   const hubA = EMERGENCY_HUBS.find(h => h.id === originHubId) || EMERGENCY_HUBS[0];
   const hubB = EMERGENCY_HUBS.find(h => h.id === destHubId) || EMERGENCY_HUBS[3];
@@ -177,7 +241,9 @@ export default function MapClient({ centerCoords }: { centerCoords?: [number, nu
       .then(data => {
         if (isMounted) setFacilities(data);
       })
-      .catch(console.error);
+      .catch(err => {
+        console.warn('Facilities loading notice:', err);
+      });
 
     return () => {
       isMounted = false;
@@ -262,8 +328,75 @@ export default function MapClient({ centerCoords }: { centerCoords?: [number, nu
 
         <HeatLayer />
         <MapBounds />
+        <MapResizeObserver />
+        <MapClickHandler onMapClick={(lat, lng) => setClickedPoint({ lat, lng })} />
         <UserLocationController userLocation={userLocation} />
         <TargetCenterController centerCoords={centerCoords} />
+
+        {clickedPoint && (
+          <Marker position={[clickedPoint.lat, clickedPoint.lng]}>
+            <Popup className="custom-popup" position={[clickedPoint.lat, clickedPoint.lng]}>
+              <div className="p-2 min-w-[230px] max-w-[300px]">
+                <div className="flex items-center justify-between border-b border-white/10 pb-1.5 mb-2">
+                  <h4 className="font-black text-xs text-indigo-300 flex items-center gap-1 uppercase">
+                    <MapPin className="w-3.5 h-3.5 text-indigo-400" /> Clicked Location GIS
+                  </h4>
+                  <span className="text-[9px] font-mono text-neutral-400">
+                    {clickedPoint.lat.toFixed(3)}°, {clickedPoint.lng.toFixed(3)}°
+                  </span>
+                </div>
+
+                {pointTelemetry && (
+                  <div className="mb-2 bg-white/5 p-2 rounded-lg text-[9px] grid grid-cols-3 gap-1 text-center font-mono">
+                    <div>
+                      <span className="text-neutral-400 block">Temp</span>
+                      <span className="text-amber-300 font-bold">{pointTelemetry.temperature}°C</span>
+                    </div>
+                    <div>
+                      <span className="text-neutral-400 block">Rain</span>
+                      <span className="text-cyan-300 font-bold">{pointTelemetry.rain}mm</span>
+                    </div>
+                    <div>
+                      <span className="text-neutral-400 block">Wind</span>
+                      <span className="text-indigo-300 font-bold">{pointTelemetry.windSpeed}k/h</span>
+                    </div>
+                  </div>
+                )}
+
+                {pointFlood && pointFlood.riverDischarge > 0 && (
+                  <div className="mb-2 text-[9px] font-mono bg-blue-500/10 p-1.5 rounded flex justify-between">
+                    <span className="text-neutral-400">River Discharge:</span>
+                    <span className="text-blue-300 font-bold">{pointFlood.riverDischarge} m³/s</span>
+                  </div>
+                )}
+
+                <div className="mt-2">
+                  <p className="text-[9px] font-black uppercase text-amber-400 mb-1 flex items-center gap-1">
+                    <Newspaper className="w-3 h-3 text-amber-400" /> GDELT Live Location News
+                  </p>
+                  {pointNews.length > 0 ? (
+                    <div className="space-y-1 max-h-32 overflow-y-auto custom-scrollbar">
+                      {pointNews.map((n, idx) => (
+                        <a
+                          key={idx}
+                          href={n.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="block text-[9.5px] font-medium text-white hover:text-amber-300 line-clamp-2 leading-tight bg-white/5 p-1.5 rounded transition-colors"
+                        >
+                          • {n.title}
+                          <span className="block text-[8px] text-neutral-400 mt-0.5">{n.source} • {n.seendate}</span>
+                        </a>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-[8.5px] text-neutral-400 italic">Fetching GDELT live news...</p>
+                  )}
+                </div>
+              </div>
+            </Popup>
+          </Marker>
+        )}
 
         {userLocation && (
           <Marker position={userLocation} icon={UserIcon}>

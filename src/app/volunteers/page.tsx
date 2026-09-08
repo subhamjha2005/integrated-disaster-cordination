@@ -22,6 +22,7 @@ import { useAppStore } from '@/store/useAppStore';
 import { DashboardLayout } from '@/components/Layout/DashboardLayout';
 import { MeshSyncButton } from '@/components/UI/MeshSyncButton';
 import { Task, Skill } from '@/lib/types';
+import Link from 'next/link';
 
 const SKILL_ICONS: Record<Skill | string, any> = {
   'Medical': Stethoscope,
@@ -84,12 +85,12 @@ export default function VolunteerDashboard() {
             <h2 className="text-2xl font-black text-white uppercase tracking-tight">Access Denied</h2>
             <p className="text-neutral-500 max-w-xs text-sm">You must register as a volunteer to access the deployment grid.</p>
           </div>
-          <button
-            onClick={() => window.location.href = '/volunteers/register'}
-            className="px-8 py-4 bg-sapphire hover:bg-sapphire text-white font-black uppercase tracking-widest rounded-2xl transition-all"
+          <Link
+            href="/volunteers/register"
+            className="px-8 py-4 bg-sapphire hover:bg-sapphire text-white font-black uppercase tracking-widest rounded-2xl transition-all inline-block"
           >
             Go to Registration
-          </button>
+          </Link>
         </div>
       </DashboardLayout>
     );

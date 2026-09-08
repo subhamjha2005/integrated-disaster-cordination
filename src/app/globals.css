@@ -42,6 +42,15 @@ html.light-theme {
   --foreground: var(--text-primary);
 }
 
+/* ── Tailwind v4 Theme Color Mapping Utilities ─────── */
+.bg-navy { background-color: var(--bg-base); }
+.bg-navy-panel { background-color: var(--bg-panel); }
+.bg-sapphire { background-color: #4f46e5; }
+.text-powder { color: #818cf8; }
+.text-sapphire { color: #6366f1; }
+.text-ice { color: #06b6d4; }
+.border-sapphire { border-color: rgba(99, 102, 241, 0.3); }
+
 
 
 @layer base {

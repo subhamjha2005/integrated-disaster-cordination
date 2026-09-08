@@ -166,8 +166,8 @@
 │     ├── Stored in localStorage                       │
 │     └── Messages signed with private key             │
 │                                                      │
-│  3. Prototype Safeguards                             │
-│     ├── DEMO banner on every page                    │
+│  3. Operational System Safeguards                    │
+│     ├── Command banner on login page                 │
 │     ├── No real emergency service connections        │
 │     └── All data is simulated/seeded                 │
 │                                                      │

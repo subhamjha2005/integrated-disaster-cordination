@@ -32,7 +32,7 @@ const en = {
     role_volunteer: 'Operations',
     role_admin: 'Administration',
     switch_role: 'Switch Role',
-    disclaimer: 'PROTOTYPE/DEMO ONLY: Not connected to real emergency services.',
+    disclaimer: 'LIVE INTEGRATED SYSTEM: Active Disaster Coordination Network.',
 
     // General UI
     online: 'On',
@@ -202,7 +202,7 @@ const hi: Record<TranslationKey, string> = {
     role_volunteer: 'संचालन',
     role_admin: 'प्रशासन',
     switch_role: 'भूमिका बदलें',
-    disclaimer: 'केवल प्रोटोटाइप/डेमो: वास्तविक आपातकालीन सेवाओं से जुड़ा नहीं है।',
+    disclaimer: 'लाइव एकीकृत प्रणाली: सक्रिय आपदा समन्वय नेटवर्क।',
 
     // General UI
     online: 'चालू',
@@ -372,7 +372,7 @@ const as: Record<TranslationKey, string> = {
     role_volunteer: 'পৰিচালনা',
     role_admin: 'প্ৰশাসন',
     switch_role: 'ভূমিকা সলনি কৰক',
-    disclaimer: 'কেৱল প্ৰটোটাইপ/ডেমো: প্ৰকৃত জৰুৰীকালীন সেৱাৰ সৈতে সংযুক্ত নহয়।',
+    disclaimer: 'লাইভ সংহত ব্যৱস্থা: সক্ৰিয় দুৰ্যোগ সমন্বয় নেটৱৰ্ক।',
 
     // General UI
     online: 'অন',

@@ -97,10 +97,10 @@ export function ChannelList({ channels, activeChannelId, onSelectChannel, isConn
 
       {/* Channels List */}
       <div className="flex-1 overflow-y-auto custom-scrollbar px-2 py-3">
-        {renderGroup(`🚨 Agency Dispatch Stations`, agencyChannels, 'text-rose-400')}
-        {renderGroup(`⚡ Broadcast Channels`, emergencyChannels, 'text-amber-400')}
-        {renderGroup(`📍 Geo Sectors`, locationChannels, 'text-powder')}
-        {renderGroup(`🏕️ Camps`, campChannels, 'text-neutral-400')}
+        {renderGroup(`Agency Dispatch Stations`, agencyChannels, 'text-rose-400')}
+        {renderGroup(`Broadcast Channels`, emergencyChannels, 'text-amber-400')}
+        {renderGroup(`Geo Sectors`, locationChannels, 'text-indigo-400')}
+        {renderGroup(`Relief Camps`, campChannels, 'text-neutral-400')}
       </div>
     </div>
   );

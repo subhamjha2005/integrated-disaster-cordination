@@ -14,6 +14,9 @@ const QUEUE_STORE = 'outbox';
 
 function openDB(): Promise<IDBDatabase> {
     return new Promise((resolve, reject) => {
+        if (typeof window === 'undefined' || !window.indexedDB) {
+            return reject(new Error('IndexedDB is not supported or not available in this environment'));
+        }
         const req = indexedDB.open(DB_NAME, DB_VERSION);
         req.onupgradeneeded = () => {
             const db = req.result;

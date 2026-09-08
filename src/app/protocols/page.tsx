@@ -274,7 +274,7 @@ export default function ProtocolsPage() {
               Providing high-fidelity safety instructions for citizen-led emergency response.
             </p>
             <div className="pt-4 flex items-center space-x-4">
-              <a href="https://www.ndrf.gov.in/en/disaster-awareness-e-content" target="_blank" className="flex items-center text-[10px] font-black text-neutral-500 hover:text-white transition-colors uppercase tracking-widest">
+              <a href="https://www.ndrf.gov.in/en/disaster-awareness-e-content" target="_blank" rel="noopener noreferrer" className="flex items-center text-[10px] font-black text-neutral-500 hover:text-white transition-colors uppercase tracking-widest">
                 <ExternalLink className="w-3 h-3 mr-2" />
                 Official NDRF Source
               </a>

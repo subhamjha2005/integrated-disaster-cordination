@@ -6,8 +6,8 @@ import { useAppStore } from '@/store/useAppStore';
 import * as THREE from 'three';
 import { AlertTriangle, ShieldCheck, Compass, X, Radio, ArrowUpRight, Flame, Globe2, Activity } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { fetchAllLiveDisasters, LiveDisasterEvent, fetchLiveTelemetry, LiveTelemetryData, fetchOpenMeteoFlood, LiveFloodData } from '@/lib/disasterApi';
-import { CloudRain, Thermometer, Wind, Waves } from 'lucide-react';
+import { fetchAllLiveDisasters, fetchIndiaDisasterEvents, LiveDisasterEvent, fetchLiveTelemetry, LiveTelemetryData, fetchOpenMeteoFlood, LiveFloodData, fetchLocationNews, NewsArticle } from '@/lib/disasterApi';
+import { CloudRain, Thermometer, Wind, Waves, Newspaper } from 'lucide-react';
 
 // Fast Haversine for distance calculation in KM
 const calculateDistanceKm = (lat1: number, lon1: number, lat2: number, lon2: number) => {
@@ -35,22 +35,25 @@ export default function GlobeClient({ onEngage }: { onEngage?: (coords?: { lat: 
   });
   const [pointWeather, setPointWeather] = useState<LiveTelemetryData | null>(null);
   const [pointFlood, setPointFlood] = useState<LiveFloodData | null>(null);
+  const [pointNews, setPointNews] = useState<NewsArticle[]>([]);
 
-  // Fetch Open-Meteo Weather & Flood API for selected coordinates
+  // Fetch Open-Meteo Weather, Flood & GDELT News API for selected coordinates
   useEffect(() => {
     if (!selectedPoint) return;
     let isMounted = true;
 
     async function loadPointTelemetry() {
       if (!selectedPoint) return;
-      const [weather, flood] = await Promise.allSettled([
+      const [weather, flood, news] = await Promise.allSettled([
         fetchLiveTelemetry(selectedPoint.lat, selectedPoint.lng),
-        fetchOpenMeteoFlood(selectedPoint.lat, selectedPoint.lng)
+        fetchOpenMeteoFlood(selectedPoint.lat, selectedPoint.lng),
+        fetchLocationNews('', selectedPoint.lat, selectedPoint.lng)
       ]);
 
       if (isMounted) {
         if (weather.status === 'fulfilled') setPointWeather(weather.value);
         if (flood.status === 'fulfilled') setPointFlood(flood.value);
+        if (news.status === 'fulfilled') setPointNews(news.value || []);
       }
     }
 
@@ -61,16 +64,22 @@ export default function GlobeClient({ onEngage }: { onEngage?: (coords?: { lat: 
     };
   }, [selectedPoint]);
 
-  // Fetch Live Public APIs (NASA EONET, USGS, GDACS) with local dataset fallback
+  // Fetch Live Public APIs (NASA EONET, USGS, GDACS, NDMA India) with local dataset fallback
   useEffect(() => {
     let isMounted = true;
 
     async function loadDisasters() {
       try {
-        const liveData = await fetchAllLiveDisasters();
-        if (isMounted && liveData.length > 0) {
-          setLiveEvents(liveData);
-          return;
+        const [liveData, indiaData] = await Promise.all([
+          fetchAllLiveDisasters(),
+          fetchIndiaDisasterEvents()
+        ]);
+        if (isMounted) {
+          const merged = [...indiaData, ...liveData];
+          if (merged.length > 0) {
+            setLiveEvents(merged);
+            return;
+          }
         }
       } catch (err) {
         console.error("Live disaster APIs failed, switching to local dataset fallback", err);
@@ -401,6 +410,45 @@ export default function GlobeClient({ onEngage }: { onEngage?: (coords?: { lat: 
                 <div className="p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-xl flex items-center space-x-2 text-emerald-300">
                   <ShieldCheck className="w-4 h-4 text-emerald-400 flex-shrink-0" />
                   <p className="text-[10px] font-bold">No active disaster incidents detected within 500km radius.</p>
+                </div>
+              )}
+            </div>
+
+            {/* Real GDELT & UN GDACS Live Location News Headlines */}
+            <div className="mb-4">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-[10px] font-black uppercase tracking-wider text-neutral-300 flex items-center gap-1.5">
+                  <Newspaper className="w-3.5 h-3.5 text-amber-400" />
+                  Live GDELT News Headlines
+                </span>
+                <span className="px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 text-[9px] font-mono font-bold">
+                  {pointNews.length} Reports
+                </span>
+              </div>
+
+              {pointNews.length > 0 ? (
+                <div className="space-y-1.5 max-h-32 overflow-y-auto custom-scrollbar pr-1">
+                  {pointNews.map((news, idx) => (
+                    <a
+                      key={idx}
+                      href={news.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="block p-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl transition-colors group"
+                    >
+                      <p className="text-[11px] font-bold text-white group-hover:text-amber-300 line-clamp-2 leading-snug">
+                        {news.title}
+                      </p>
+                      <div className="flex items-center justify-between mt-1 text-[8.5px] font-mono text-neutral-400">
+                        <span className="text-amber-400 font-semibold">{news.source}</span>
+                        <span>{news.seendate}</span>
+                      </div>
+                    </a>
+                  ))}
+                </div>
+              ) : (
+                <div className="p-2.5 bg-white/5 rounded-xl text-[9.5px] text-neutral-400 italic text-center">
+                  Fetching live regional disaster news...
                 </div>
               )}
             </div>
