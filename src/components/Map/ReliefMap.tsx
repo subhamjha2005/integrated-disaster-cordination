@@ -16,7 +16,7 @@ const MapClient = dynamic(() => import('./MapClient'), {
 
 export function ReliefMap({ centerCoords, className, rawContainer = false }: { centerCoords?: [number, number]; className?: string; rawContainer?: boolean }) {
   return (
-    <div className={className || (rawContainer ? "w-full h-full relative overflow-hidden" : "glass-panel w-full h-full relative overflow-hidden")}>
+    <div className={className || (rawContainer ? "w-full h-full min-h-[350px] relative overflow-hidden" : "glass-panel w-full h-full min-h-[350px] relative overflow-hidden")}>
       <MapClient centerCoords={centerCoords} />
     </div>
   );

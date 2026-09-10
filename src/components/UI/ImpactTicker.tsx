@@ -67,6 +67,9 @@ export function ImpactTicker() {
             }
         }
         loadNews();
+        return () => {
+            isMounted = false;
+        };
     }, []);
 
     // Simulate live increments

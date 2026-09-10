@@ -103,7 +103,7 @@ export default function GovernmentFleetUI() {
          </div>
 
          {/* Map View Canvas */}
-         <div className="flex-1 w-full h-full relative">
+         <div className="flex-1 w-full h-full relative min-h-[350px]">
             <ReliefMap />
          </div>
       </div>
@@ -111,10 +111,10 @@ export default function GovernmentFleetUI() {
 
    return (
       <DashboardLayout>
-         <div className="h-[calc(100vh-8rem)] flex flex-col xl:flex-row gap-6">
+         <div className="min-h-[calc(100vh-8rem)] flex flex-col xl:flex-row gap-6">
 
             {/* Left Side: Fleet Map (Standard Inline View) */}
-            <div className="flex-1 glass-panel rounded-3xl overflow-hidden flex flex-col relative border border-white/5 shadow-2xl">
+            <div className="flex-1 glass-panel rounded-3xl overflow-hidden flex flex-col relative border border-white/5 shadow-2xl min-h-[450px]">
                {renderMapContent()}
             </div>
 

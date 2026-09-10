@@ -122,20 +122,50 @@ export const useAppStore = create<AppState>((set, get) => ({
   ],
 
   setHydratedState: (state) => {
-    const storedVolunteers = typeof window !== 'undefined' ? localStorage.getItem('volunteers') : null;
-    const storedRole = typeof window !== 'undefined' ? localStorage.getItem('userRole') : null;
+    let parsedVolunteers = undefined;
+    let parsedRole: 'public' | 'volunteer' | 'government' | null = null;
+
+    if (typeof window !== 'undefined') {
+      try {
+        const storedVolunteers = localStorage.getItem('volunteers');
+        if (storedVolunteers) parsedVolunteers = JSON.parse(storedVolunteers);
+      } catch (e) {
+        console.warn('Failed to parse stored volunteers:', e);
+      }
+
+      try {
+        const storedRole = localStorage.getItem('userRole');
+        if (storedRole) {
+          try {
+            parsedRole = JSON.parse(storedRole);
+          } catch {
+            parsedRole = storedRole as any;
+          }
+        }
+      } catch (e) {
+        console.warn('Failed to parse stored role:', e);
+      }
+    }
 
     set((s) => ({
       ...s,
       ...state,
-      volunteers: storedVolunteers ? JSON.parse(storedVolunteers) : s.volunteers,
-      userRole: storedRole ? JSON.parse(storedRole) : s.userRole,
+      volunteers: Array.isArray(parsedVolunteers) ? parsedVolunteers : s.volunteers,
+      userRole: (parsedRole === 'public' || parsedRole === 'volunteer' || parsedRole === 'government')
+        ? parsedRole
+        : s.userRole,
       isHydrated: true
     }));
   },
   setRole: (role) => {
     set({ userRole: role });
-    if (typeof window !== 'undefined') localStorage.setItem('userRole', JSON.stringify(role));
+    if (typeof window !== 'undefined' && role) {
+      try {
+        localStorage.setItem('userRole', JSON.stringify(role));
+      } catch (e) {
+        console.error('Failed to persist userRole:', e);
+      }
+    }
   },
 
   language: 'en',

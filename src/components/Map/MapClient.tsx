@@ -1,10 +1,9 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, useMap, useMapEvents, LayersControl } from 'react-leaflet';
+import { useEffect, useState, useCallback, Fragment } from 'react';
+import { MapContainer, TileLayer, Marker, Popup, useMap, useMapEvents, LayersControl, CircleMarker } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import 'leaflet.heat';
 import { useAppStore } from '@/store/useAppStore';
 import { Crosshair, MapPin, Loader2, Layers, Zap, Navigation, ArrowRight, Radio, Battery, Cable, Wifi, RotateCcw, GripHorizontal, ChevronDown, ChevronUp, Activity, Sparkles, Newspaper, CloudRain, Thermometer, Wind, Waves, X } from 'lucide-react';
 import { DroneRelay, EMERGENCY_HUBS } from './DroneRelay';
@@ -40,51 +39,71 @@ const UserIcon = L.divIcon({
   iconAnchor: [10, 10]
 });
 
-// Custom Heatmap Layer Component
+// Interactive Incident Heatmap Layer (Pure SVG / CircleMarkers, 100% resilient, Zero Canvas Dependencies)
 function HeatLayer() {
-  const map = useMap();
   const incidentReports = useAppStore(state => state.incidentReports);
-  const [realMissions, setRealMissions] = useState<any[]>([]);
 
-  // Disabling heavy dataset fetch to optimize load time
-  // useEffect(() => {
-  //   fetch('/datasets/parsed_disasters.json')
-  //     .then(res => res.json())
-  //     .then(data => setRealMissions(data))
-  //     .catch(console.error);
-  // }, []);
+  if (!incidentReports || incidentReports.length === 0) return null;
 
-  useEffect(() => {
-    if (!incidentReports.length && !realMissions.length) return;
+  return (
+    <>
+      {incidentReports.map(report => {
+        const intensity = typeof report.intensity === 'number' ? report.intensity : 0.5;
+        const color = intensity >= 0.7 ? '#ef4444' : intensity >= 0.4 ? '#f59e0b' : '#06b6d4';
+        const glowRadius = Math.max(16, Math.min(48, Math.round(intensity * 40)));
+        const coreRadius = Math.max(5, Math.round(glowRadius * 0.3));
 
-    const heatPoints = [
-      ...incidentReports.map(r => [
-        r.location.lat,
-        r.location.lng,
-        r.intensity * 2.0
-      ]),
-      ...realMissions.map((r: any) => [
-        r.lat,
-        r.lng,
-        0.5
-      ])
-    ] as [number, number, number][];
-
-    const heatLayer = (L as any).heatLayer(heatPoints, {
-      radius: 35,
-      blur: 20,
-      maxZoom: 17,
-      gradient: { 0.4: 'cyan', 0.65: 'lime', 1: 'red' }
-    });
-
-    heatLayer.addTo(map);
-
-    return () => {
-      map.removeLayer(heatLayer);
-    };
-  }, [incidentReports, realMissions, map]);
-
-  return null;
+        return (
+          <Fragment key={report.id}>
+            {/* Outer Heat Corona */}
+            <CircleMarker
+              center={[report.location.lat, report.location.lng]}
+              radius={glowRadius}
+              pathOptions={{
+                color: color,
+                fillColor: color,
+                fillOpacity: 0.22,
+                weight: 1,
+                className: 'animate-pulse'
+              }}
+            />
+            {/* Core Hotspot Marker with Interactive Report Details */}
+            <CircleMarker
+              center={[report.location.lat, report.location.lng]}
+              radius={coreRadius}
+              pathOptions={{
+                color: '#ffffff',
+                fillColor: color,
+                fillOpacity: 0.9,
+                weight: 1.5
+              }}
+            >
+              <Popup className="custom-popup">
+                <div className="p-2 min-w-[210px] max-w-[280px]">
+                  <div className="flex items-center justify-between border-b border-white/10 pb-1.5 mb-1.5">
+                    <span className={`px-2 py-0.5 rounded text-[8px] font-black uppercase text-white ${intensity >= 0.7 ? 'bg-red-500' : intensity >= 0.4 ? 'bg-amber-500' : 'bg-cyan-500'}`}>
+                      {report.type} Hotspot
+                    </span>
+                    <span className="text-[8px] font-mono text-neutral-300">
+                      Intensity: {(intensity * 10).toFixed(0)}/10
+                    </span>
+                  </div>
+                  <p className="text-xs font-bold text-white mb-1 leading-snug">{report.description}</p>
+                  <p className="text-[9px] text-neutral-400 font-mono">
+                    Lat: {report.location.lat.toFixed(3)}°, Lng: {report.location.lng.toFixed(3)}°
+                  </p>
+                  <div className="mt-1.5 pt-1 border-t border-white/10 flex justify-between text-[8px] text-neutral-400">
+                    <span>Reported by: {report.reporterName || 'Field Unit'}</span>
+                    <span className="text-emerald-400 font-bold">{report.status || 'Active'}</span>
+                  </div>
+                </div>
+              </Popup>
+            </CircleMarker>
+          </Fragment>
+        );
+      })}
+    </>
+  );
 }
 
 // Auto-center map to bounds of all camps
@@ -273,7 +292,7 @@ export default function MapClient({ centerCoords }: { centerCoords?: [number, nu
   };
 
   return (
-    <div className="w-full h-full relative group">
+    <div className="w-full h-full min-h-[400px] relative group">
       {/* Cinematic HUD Elements Wrapper */}
       <div className="absolute inset-0 z-10 pointer-events-none border-[1px] border-white/5 rounded-xl overflow-hidden">
         <div className="scanline"></div>
@@ -301,7 +320,7 @@ export default function MapClient({ centerCoords }: { centerCoords?: [number, nu
       <MapContainer
         center={initialCenter}
         zoom={13}
-        style={{ height: '100%', width: '100%', zIndex: 0 }}
+        style={{ height: '100%', minHeight: '400px', width: '100%', zIndex: 0 }}
         className="rounded-xl overflow-hidden shadow-2xl grayscale-[0.1] contrast-[1.1]"
         scrollWheelZoom={true}
       >

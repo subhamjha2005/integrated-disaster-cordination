@@ -11,6 +11,13 @@ export default function LoginPage() {
 
   const handleSelectRole = (role: 'public' | 'volunteer' | 'government', path: string) => {
     setRole(role);
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.setItem('userRole', JSON.stringify(role));
+      } catch (e) {
+        console.warn('Storage write failed:', e);
+      }
+    }
     router.push(path);
   };
 
@@ -50,10 +57,11 @@ export default function LoginPage() {
 
           {/* Public Role */}
           <motion.button
+            type="button"
             whileHover={{ y: -5, scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             onClick={() => handleSelectRole('public', '/')}
-            className="flex flex-col text-left p-8 glass-card hover:border-sapphire/50 group"
+            className="flex flex-col text-left p-8 glass-card hover:border-sapphire/50 group cursor-pointer"
           >
             <div className="w-14 h-14 rounded-2xl bg-sapphire/10 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
               <Users className="w-7 h-7 text-sapphire" />
@@ -67,10 +75,11 @@ export default function LoginPage() {
 
           {/* Volunteer Role */}
           <motion.button
+            type="button"
             whileHover={{ y: -5, scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             onClick={() => handleSelectRole('volunteer', '/volunteers')}
-            className="flex flex-col text-left p-8 glass-card hover:border-sapphire/50 group relative overflow-hidden"
+            className="flex flex-col text-left p-8 glass-card hover:border-sapphire/50 group relative overflow-hidden cursor-pointer"
           >
             <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
             <div className="w-14 h-14 rounded-2xl bg-sapphire/10 flex items-center justify-center mb-6 relative z-10 group-hover:scale-110 transition-transform">
@@ -85,10 +94,11 @@ export default function LoginPage() {
 
           {/* Government Role */}
           <motion.button
+            type="button"
             whileHover={{ y: -5, scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             onClick={() => handleSelectRole('government', '/government')}
-            className="flex flex-col text-left p-8 glass-card hover:border-sapphire/50 group relative overflow-hidden"
+            className="flex flex-col text-left p-8 glass-card hover:border-sapphire/50 group relative overflow-hidden cursor-pointer"
           >
             <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
             <div className="w-14 h-14 rounded-2xl bg-sapphire/10 flex items-center justify-center mb-6 relative z-10 group-hover:scale-110 transition-transform">

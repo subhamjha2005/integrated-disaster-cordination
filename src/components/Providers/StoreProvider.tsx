@@ -3,6 +3,17 @@
 import { useEffect } from 'react';
 import { useAppStore } from '@/store/useAppStore';
 
+// Guard against zero-dimension canvas getImageData calls (IndexSizeError) globally
+if (typeof window !== 'undefined' && typeof CanvasRenderingContext2D !== 'undefined') {
+  const origGetImageData = CanvasRenderingContext2D.prototype.getImageData;
+  CanvasRenderingContext2D.prototype.getImageData = function (sx: number, sy: number, sw: number, sh: number, ...args: any[]) {
+    if (sw <= 0 || sh <= 0) {
+      return this.createImageData(Math.max(1, Math.abs(sw) || 1), Math.max(1, Math.abs(sh) || 1));
+    }
+    return origGetImageData.call(this, sx, sy, sw, sh, ...args);
+  };
+}
+
 export function StoreProvider({
   children,
   initialState

@@ -57,20 +57,35 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const { alerts, userRole, setRole, isHydrated, theme, toggleTheme, language } = useAppStore();
   const unreadAlerts = alerts.filter(a => !a.isRead).length;
-  const isAuthorityView = userRole === 'government';
-  const isVolunteerView = userRole === 'volunteer';
+  const effectiveRole = userRole || (
+    pathname.startsWith('/government') || pathname.startsWith('/command') ? 'government' :
+    pathname.startsWith('/volunteers') ? 'volunteer' :
+    (isHydrated && pathname !== '/login' ? 'public' : null)
+  );
+
+  const isAuthorityView = effectiveRole === 'government';
+  const isVolunteerView = effectiveRole === 'volunteer';
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const t = (key: any) => getTranslation(language, key);
 
-  // Protect routes / enforce role selection
+  // Auto-align role with route or protect routes if unassigned
   useEffect(() => {
-    if (isHydrated && !userRole && pathname !== '/login') {
-      router.push('/login');
-    }
-  }, [userRole, pathname, router, isHydrated]);
+    if (!isHydrated) return;
 
-  if (!userRole) {
+    if (!userRole) {
+      if (pathname.startsWith('/government') || pathname.startsWith('/command')) {
+        setRole('government');
+      } else if (pathname.startsWith('/volunteers')) {
+        setRole('volunteer');
+      } else if (pathname !== '/login') {
+        // Fallback to public if on general page
+        setRole('public');
+      }
+    }
+  }, [userRole, pathname, router, isHydrated, setRole]);
+
+  if (!effectiveRole && pathname !== '/login') {
     return <div className="min-h-screen bg-navy flex items-center justify-center"><div className="w-8 h-8 border-4 border-sapphire border-t-transparent rounded-full animate-spin"></div></div>;
   }
 
@@ -104,7 +119,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
 
         <div className="flex-1 py-6 px-3 flex flex-col">
 
-          {userRole === 'public' && (
+          {effectiveRole === 'public' && (
             <div className="mb-8">
               <h3 className="px-3 text-[10px] font-black text-neutral-500 uppercase tracking-[0.2em] mb-4">{t('role_public')}</h3>
               <nav className="space-y-1">
@@ -129,7 +144,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
             </div>
           )}
 
-          {userRole === 'volunteer' && (
+          {effectiveRole === 'volunteer' && (
             <div className="mb-8">
               <h3 className="px-3 text-[10px] font-black text-neutral-500 uppercase tracking-[0.2em] mb-4">{t('role_volunteer')}</h3>
               <nav className="space-y-1">
@@ -154,7 +169,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
             </div>
           )}
 
-          {userRole === 'government' && (
+          {effectiveRole === 'government' && (
             <div>
               <h3 className="px-3 text-[10px] font-black text-neutral-500 uppercase tracking-[0.2em] mb-4">{t('role_admin')}</h3>
               <nav className="space-y-1">
@@ -183,13 +198,13 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
           <div className="mt-auto px-3">
             <div className="glass-card p-4">
               <div className="flex items-center space-x-3 mb-3">
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-black ${userRole === 'government' ? 'bg-indigo-600' :
-                  userRole === 'volunteer' ? 'bg-sapphire' : 'bg-sapphire'
+                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-black ${effectiveRole === 'government' ? 'bg-indigo-600' :
+                  effectiveRole === 'volunteer' ? 'bg-sapphire' : 'bg-sapphire'
                   }`}>
-                  {userRole === 'government' ? 'GOV' : userRole === 'volunteer' ? 'VOL' : 'PUB'}
+                  {effectiveRole === 'government' ? 'GOV' : effectiveRole === 'volunteer' ? 'VOL' : 'PUB'}
                 </div>
                 <div className="overflow-hidden">
-                  <p className="text-xs font-bold text-white truncate text-ellipsis uppercase">{userRole} ACCESS</p>
+                  <p className="text-xs font-bold text-white truncate text-ellipsis uppercase">{effectiveRole} ACCESS</p>
                   <p className="text-[10px] text-neutral-500 truncate">{t('connected')}</p>
                 </div>
               </div>
